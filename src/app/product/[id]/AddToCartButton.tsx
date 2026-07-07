@@ -6,7 +6,7 @@ import { useCart } from '../../../context/CartContext';
 import './AddToCartButton.scss';
 
 export default function AddToCartButton({ product }: { product: Product }) {
-  const { addToCart } = useCart();
+  const { items, addToCart, updateQuantity } = useCart();
   const [selectedSize, setSelectedSize] = useState<string | undefined>(
     product.availableSizes?.[0]
   );
@@ -14,9 +14,23 @@ export default function AddToCartButton({ product }: { product: Product }) {
     product.availableColors?.[0]
   );
 
+  const cartItem = items.find(item => 
+    item.product.id === product.id && 
+    item.selectedSize === selectedSize && 
+    item.selectedColor === selectedColor
+  );
+  const quantity = cartItem ? cartItem.quantity : 0;
+
   const handleAddToCart = () => {
     addToCart(product, 1, selectedSize, selectedColor);
-    alert('Товар добавлен в корзину!');
+  };
+
+  const handleIncrement = () => {
+    updateQuantity(product.id, quantity + 1, selectedSize, selectedColor);
+  };
+
+  const handleDecrement = () => {
+    updateQuantity(product.id, quantity - 1, selectedSize, selectedColor);
   };
 
   return (
@@ -55,9 +69,17 @@ export default function AddToCartButton({ product }: { product: Product }) {
         </div>
       )}
 
-      <button className="add-to-cart-btn" onClick={handleAddToCart}>
-        Добавить в корзину
-      </button>
+      {quantity > 0 ? (
+        <div className="quantity-controls">
+          <button className="qty-btn" onClick={handleDecrement}>-</button>
+          <span className="qty-value">{quantity} шт.</span>
+          <button className="qty-btn" onClick={handleIncrement}>+</button>
+        </div>
+      ) : (
+        <button className="add-to-cart-btn" onClick={handleAddToCart}>
+          Добавить в корзину
+        </button>
+      )}
     </div>
   );
 }
