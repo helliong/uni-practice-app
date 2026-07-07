@@ -1,5 +1,20 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Uni Practice App: IT / University Merch Store
 
+Учебный проект интернет-магазина мерча. 
+
+## План проекта
+Магазин IT и университетской атрибутики.
+
+### Основные фичи (MVP)
+- **Каталог товаров** с выбором размера и цвета.
+- **Корзина** и оформление заказа (Checkout).
+- **Авторизация** через GitHub или университетскую почту (OAuth).
+- **Персонализация** — выбор специализации при регистрации (для рекомендаций товаров).
+- **Закрытые товары** — эксклюзивный мерч, доступный для покупки только авторизованным пользователям.
+
+---
+
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 ## Getting Started
 
 First, run the development server:
