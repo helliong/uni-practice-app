@@ -1,19 +1,80 @@
+/* =========================
+   Fonts
+========================= */
+
 :root {
-  --primary-color: #007bff;
-  --secondary-color: #6c757d;
-  --background-color: #f8f9fa;
-  --text-color: #212529;
-  --border-color: #dee2e6;
-  --card-bg: #fff;
+  --font-heading: var(--font-heading, "Playfair Display", Georgia, serif);
+  --font-body: var(--font-body, "Inter", Arial, sans-serif);
 }
 
-body.dark-theme {
-  --primary-color: #3f9eff;
-  --secondary-color: #a0aab3;
-  --background-color: #121212;
-  --text-color: #e0e0e0;
-  --border-color: #333333;
-  --card-bg: #1e1e1e;
+body {
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, h4, h5, h6, .hero-title, .section-title {
+  font-family: var(--font-heading);
+}
+
+button, input, a, p, span, .product-title, .card-title {
+  font-family: var(--font-body);
+}
+
+/* =========================
+   Light Theme
+========================= */
+
+:root {
+  --bg-main: #FCF9F6;
+  --bg-section: #F8F5EF;
+  --bg-card: #FFFFFF;
+  --bg-card-soft: #F4F1EC;
+
+  --text-main: #18202C;
+  --text-secondary: #626873;
+  --text-muted: #8A9099;
+
+  --primary: #101D33;
+  --primary-hover: #172742;
+  --primary-text: #FFFFFF;
+
+  --border: #C9CDD3;
+  --border-soft: #E3E0DA;
+
+  --accent-teal: #5F8F8A;
+  --accent-green: #2F5E56;
+  --accent-beige: #E9DFD1;
+  --accent-sand: #DDD0C1;
+
+  --product-dark: #111923;
+}
+
+/* =========================
+   Dark Theme
+========================= */
+
+body.dark-theme, [data-theme="dark"] {
+  --bg-main: #071016;
+  --bg-section: #0B141B;
+  --bg-card: #101A22;
+  --bg-card-soft: #131F28;
+
+  --text-main: #F5F1EA;
+  --text-secondary: #B8C0C8;
+  --text-muted: #7F8A94;
+
+  --primary: #10254A;
+  --primary-hover: #18345F;
+  --primary-text: #FFFFFF;
+
+  --border: #26333D;
+  --border-soft: #1B2730;
+
+  --accent-teal: #7FB7B0;
+  --accent-green: #123834;
+  --accent-beige: #C8B79E;
+  --accent-warm: #A88E6E;
+
+  --product-dark: #050A0E;
 
   .logo img, .footer-logo img {
     filter: invert(1) brightness(1.5);
@@ -26,13 +87,11 @@ body.dark-theme {
   margin: 0;
 }
 
-html,
-body {
+html, body {
   max-width: 100vw;
   overflow-x: hidden;
-  font-family: var(--font-geist-sans), sans-serif;
-  background-color: var(--background-color);
-  color: var(--text-color);
+  background-color: var(--bg-main);
+  color: var(--text-main);
 }
 
 a {
@@ -44,5 +103,4 @@ button {
   cursor: pointer;
   border: none;
   background: none;
-  font-family: inherit;
 }

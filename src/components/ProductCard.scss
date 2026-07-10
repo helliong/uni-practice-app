@@ -1,8 +1,8 @@
 .product-card {
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
-  background-color: var(--card-bg);
+  background-color: var(--bg-card);
   transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
   flex-direction: column;
@@ -83,9 +83,9 @@
       margin-bottom: 0.5rem;
       
       a {
-        color: var(--text-color);
+        color: var(--text-main);
         &:hover {
-          color: var(--primary-color);
+          color: var(--primary);
         }
       }
     }
@@ -93,7 +93,7 @@
     .price {
       font-size: 1.25rem;
       font-weight: bold;
-      color: var(--primary-color);
+      color: var(--primary);
       margin-bottom: 1rem;
       margin-top: auto;
     }
@@ -104,8 +104,8 @@
       width: 100%;
       padding: 0.75rem;
       background-color: var(--background-color);
-      border: 1px solid var(--border-color);
-      color: var(--text-color);
+      border: 1px solid var(--border);
+      color: var(--text-main);
       border-radius: 4px;
       font-weight: 500;
       cursor: pointer;
@@ -113,9 +113,9 @@
       transition: all 0.2s;
 
       &:hover {
-        background-color: var(--primary-color);
-        color: #fff;
-        border-color: var(--primary-color);
+        background-color: var(--primary);
+        color: var(--primary-text);
+        border-color: var(--primary);
       }
     }
 
@@ -125,7 +125,7 @@
       justify-content: space-between;
       width: 100%;
       background-color: var(--background-color);
-      border: 1px solid var(--border-color);
+      border: 1px solid var(--border);
       border-radius: 4px;
       overflow: hidden;
 
@@ -134,14 +134,14 @@
         padding: 0.75rem;
         background: none;
         border: none;
-        color: var(--text-color);
+        color: var(--text-main);
         font-size: 1.2rem;
         font-weight: bold;
         cursor: pointer;
         transition: background-color 0.2s;
 
         &:hover {
-          background-color: var(--border-color);
+          background-color: var(--border);
         }
       }
 
@@ -149,7 +149,7 @@
         flex: 1;
         text-align: center;
         font-weight: 500;
-        color: var(--text-color);
+        color: var(--text-main);
       }
     }
   }
