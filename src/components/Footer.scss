@@ -66,7 +66,7 @@
       width: 36px;
       height: 36px;
       border-radius: 50%;
-      background-color: var(--background-color);
+      background-color: var(--bg-main);
       color: var(--text-main);
       transition: background-color 0.2s, color 0.2s, transform 0.2s;
 
@@ -95,7 +95,7 @@
       transition: color 0.2s;
 
       &:hover {
-        color: var(--primary);
+        color: var(--text-main);
       }
     }
   }
@@ -124,7 +124,7 @@
         transition: color 0.2s;
 
         &:hover {
-          color: var(--primary);
+          color: var(--text-main);
         }
       }
     }
@@ -154,7 +154,7 @@
         transition: color 0.2s;
         
         &:hover {
-          color: var(--primary);
+          color: var(--text-main);
         }
       }
     }

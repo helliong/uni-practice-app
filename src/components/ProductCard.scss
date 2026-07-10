@@ -84,8 +84,9 @@
       
       a {
         color: var(--text-main);
+        transition: opacity 0.2s;
         &:hover {
-          color: var(--primary);
+          opacity: 0.7;
         }
       }
     }
@@ -93,7 +94,7 @@
     .price {
       font-size: 1.25rem;
       font-weight: bold;
-      color: var(--primary);
+      color: var(--text-main);
       margin-bottom: 1rem;
       margin-top: auto;
     }
@@ -103,7 +104,7 @@
       text-align: center;
       width: 100%;
       padding: 0.75rem;
-      background-color: var(--background-color);
+      background-color: var(--bg-main);
       border: 1px solid var(--border);
       color: var(--text-main);
       border-radius: 4px;
@@ -124,7 +125,7 @@
       align-items: center;
       justify-content: space-between;
       width: 100%;
-      background-color: var(--background-color);
+      background-color: var(--bg-main);
       border: 1px solid var(--border);
       border-radius: 4px;
       overflow: hidden;

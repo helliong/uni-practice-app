@@ -18,7 +18,7 @@
       font-size: 2rem;
       margin-bottom: 0.5rem;
       text-align: center;
-      color: var(--primary);
+      color: var(--text-main);
     }
 
     .subtitle {
@@ -49,7 +49,7 @@
         border: 1px solid var(--border);
         border-radius: 4px;
         font-family: inherit;
-        background-color: var(--background-color);
+        background-color: var(--bg-main);
         color: var(--text-main);
 
         &:focus {
@@ -79,7 +79,7 @@
         color: var(--text-secondary);
 
         a {
-          color: var(--primary);
+          color: var(--text-main);
           text-decoration: underline;
         }
       }
@@ -94,7 +94,7 @@
       border-radius: 4px;
       
       &:hover {
-        background-color: #0069d9;
+        background-color: var(--primary-hover);
       }
     }
   }
@@ -108,7 +108,7 @@
     color: var(--text-secondary);
 
     a {
-      color: var(--primary);
+      color: var(--text-main);
       font-weight: 500;
       
       &:hover {

@@ -7,7 +7,7 @@
   h1 {
     font-size: 2.5rem;
     margin-bottom: 2rem;
-    color: var(--primary);
+    color: var(--text-main);
   }
 
   .empty-msg {
@@ -18,7 +18,7 @@
 
   .back-link {
     display: inline-block;
-    color: var(--primary);
+    color: var(--text-main);
     font-weight: 500;
     
     &:hover {
@@ -67,7 +67,7 @@
       flex-shrink: 0;
       width: 100px;
       height: 100px;
-      background-color: var(--background-color);
+      background-color: var(--bg-main);
       border-radius: 4px;
       overflow: hidden;
       margin-right: 1.5rem;
@@ -88,7 +88,7 @@
 
         a {
           color: var(--text-main);
-          &:hover { color: var(--primary); }
+          &:hover { color: var(--text-main); }
         }
       }
 

@@ -8,7 +8,7 @@
   h1 {
     font-size: 2.5rem;
     margin-bottom: 2rem;
-    color: var(--primary);
+    color: var(--text-main);
     text-align: left;
   }
 
@@ -36,7 +36,7 @@
       transition: background-color 0.2s;
 
       &:hover {
-        background-color: #0069d9;
+        background-color: var(--primary-hover);
       }
     }
   }

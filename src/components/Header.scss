@@ -41,7 +41,7 @@
     transition: color 0.2s;
 
     &:hover {
-      color: var(--primary);
+      color: var(--text-main);
     }
   }
 
@@ -116,7 +116,7 @@
     transition: color 0.2s;
 
     &:hover {
-      color: var(--primary);
+      color: var(--text-main);
     }
 
     svg {
