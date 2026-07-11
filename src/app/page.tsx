@@ -6,12 +6,47 @@ import Link from "next/link";
 import { FiFeather, FiGift, FiTruck } from "react-icons/fi";
 
 const categories = [
-  { name: "Худи", count: 23, id: "hoodies", imageLight: "/category-hoodie-premium.png", imageDark: "/category-hoodie-white-premium.png" },
-  { name: "Футболки", count: 34, id: "tshirts", imageLight: "/category-tshirt-premium.png", imageDark: "/category-tshirt-white-premium.png" },
-  { name: "Стикеры", count: 28, id: "stickers", imageLight: "/category-stickers-premium.png", imageDark: "/category-stickers-white-premium3.png" },
-  { name: "Аксессуары", count: 42, id: "accessories", imageLight: "/category-accessories-premium.png", imageDark: "/category-accessories-white-premium.png" },
-  { name: "Университеты", count: 36, id: "universities", image: "/category-university-grey.png" },
-  { name: "IT-команды", count: 18, id: "teams", imageLight: "/category-teams-premium.png", imageDark: "/category-teams-white-premium.png" },
+  {
+    name: "Худи",
+    count: 23,
+    id: "hoodies",
+    imageLight: "/category-hoodie-premium.png",
+    imageDark: "/category-hoodie-white-premium.png",
+  },
+  {
+    name: "Футболки",
+    count: 34,
+    id: "tshirts",
+    imageLight: "/category-tshirt-premium.png",
+    imageDark: "/category-tshirt-white-premium.png",
+  },
+  {
+    name: "Стикеры",
+    count: 28,
+    id: "stickers",
+    imageLight: "/category-stickers-premium.png",
+    imageDark: "/category-stickers-white-premium3.png",
+  },
+  {
+    name: "Аксессуары",
+    count: 42,
+    id: "accessories",
+    imageLight: "/category-accessories-premium.png",
+    imageDark: "/category-accessories-white-premium.png",
+  },
+  {
+    name: "Университеты",
+    count: 36,
+    id: "universities",
+    image: "/category-university-grey.png",
+  },
+  {
+    name: "IT-команды",
+    count: 18,
+    id: "teams",
+    imageLight: "/category-teams-premium.png",
+    imageDark: "/category-teams-white-premium.png",
+  },
 ];
 
 export default function Home() {
@@ -91,11 +126,28 @@ export default function Home() {
               <div className="category-image-placeholder">
                 {cat.imageLight && cat.imageDark ? (
                   <>
-                    <Image src={cat.imageLight} alt={cat.name} fill style={{ objectFit: 'cover', borderRadius: '8px' }} className="img-light-theme" />
-                    <Image src={cat.imageDark} alt={cat.name} fill style={{ objectFit: 'cover', borderRadius: '8px' }} className="img-dark-theme" />
+                    <Image
+                      src={cat.imageLight}
+                      alt={cat.name}
+                      fill
+                      style={{ objectFit: "cover", borderRadius: "8px" }}
+                      className="img-light-theme"
+                    />
+                    <Image
+                      src={cat.imageDark}
+                      alt={cat.name}
+                      fill
+                      style={{ objectFit: "cover", borderRadius: "8px" }}
+                      className="img-dark-theme"
+                    />
                   </>
                 ) : cat.image ? (
-                  <Image src={cat.image} alt={cat.name} fill style={{ objectFit: 'cover', borderRadius: '8px' }} />
+                  <Image
+                    src={cat.image}
+                    alt={cat.name}
+                    fill
+                    style={{ objectFit: "cover", borderRadius: "8px" }}
+                  />
                 ) : (
                   <div className="placeholder-bg"></div>
                 )}
@@ -120,13 +172,58 @@ export default function Home() {
       <section className="catalog-section" id="catalog">
         <div className="section-header">
           <h2>Популярные товары</h2>
-          <Link href="/catalog" className="view-all">Смотреть все &rarr;</Link>
+          <Link href="/catalog" className="view-all">
+            Смотреть все &rarr;
+          </Link>
         </div>
         <div className="product-grid">
           {mockProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
+      </section>
+
+      <section className="promo-banners-section" style={{ marginTop: "2rem" }}>
+        <Link href="/category/universities" className="promo-banner">
+          <Image
+            src="/banner-one.png"
+            alt="Коллекции университетов"
+            width={800}
+            height={380}
+            unoptimized
+          />
+          <span className="promo-banner-content">
+            <span className="promo-banner-title">
+              Коллекции
+              <br />
+              университетов
+            </span>
+            <span className="promo-banner-subtitle">
+              Поддерживай свой вуз стильно
+            </span>
+            <span className="promo-banner-button">Смотреть коллекции</span>
+          </span>
+        </Link>
+        <Link href="/category/teams" className="promo-banner">
+          <Image
+            src="/banner-two.png"
+            alt="IT-коллекции для разработчиков"
+            width={800}
+            height={380}
+            unoptimized
+          />
+          <span className="promo-banner-content">
+            <span className="promo-banner-title">
+              IT-коллекции
+              <br />
+              для разработчиков
+            </span>
+            <span className="promo-banner-subtitle">
+              Минимализм. Функциональность. Ты.
+            </span>
+            <span className="promo-banner-button">Смотреть коллекции</span>
+          </span>
+        </Link>
       </section>
     </main>
   );
