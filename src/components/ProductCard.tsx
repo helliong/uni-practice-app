@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Product } from '../types';
@@ -8,34 +10,45 @@ import { useCart } from '../context/CartContext';
 import { useFavorites } from '../context/FavoritesContext';
 import './ProductCard.scss';
 
+import './ProductCard.scss';
+
+const categoryNames: Record<string, string> = {
+  hoodie: 'Худи',
+  tshirt: 'Футболки',
+  sticker: 'Стикеры',
+  accessories: 'Аксессуары',
+  mug: 'Кружки',
+  other: 'Разное'
+};
+
 export default function ProductCard({ product }: { product: Product }) {
   const { items, addToCart, updateQuantity } = useCart();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const favorite = isFavorite(product.id);
 
-  const defaultSize = product.availableSizes?.[0];
+  const [selectedSize, setSelectedSize] = useState<string | undefined>(product.availableSizes?.[0]);
   const defaultColor = product.availableColors?.[0];
 
   const cartItem = items.find(item => 
     item.product.id === product.id && 
-    item.selectedSize === defaultSize && 
+    item.selectedSize === selectedSize && 
     item.selectedColor === defaultColor
   );
   const quantity = cartItem ? cartItem.quantity : 0;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    addToCart(product, 1, defaultSize, defaultColor);
+    addToCart(product, 1, selectedSize, defaultColor);
   };
 
   const handleIncrement = (e: React.MouseEvent) => {
     e.preventDefault();
-    updateQuantity(product.id, quantity + 1, defaultSize, defaultColor);
+    updateQuantity(product.id, quantity + 1, selectedSize, defaultColor);
   };
 
   const handleDecrement = (e: React.MouseEvent) => {
     e.preventDefault();
-    updateQuantity(product.id, quantity - 1, defaultSize, defaultColor);
+    updateQuantity(product.id, quantity - 1, selectedSize, defaultColor);
   };
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
@@ -75,24 +88,62 @@ export default function ProductCard({ product }: { product: Product }) {
         </button>
       </Link>
       <div className="product-info">
+        <p className="category-name">{categoryNames[product.category] || 'Товар'}</p>
         <h3><Link href={productUrl}>{product.name}</Link></h3>
         <p className="price">{product.price.toLocaleString('ru-RU')} ₽</p>
         
-        {quantity > 0 ? (
-          <div className="quantity-controls">
-            <button className="qty-btn" onClick={handleDecrement}>-</button>
-            <span className="qty-value">{quantity} шт.</span>
-            <button className="qty-btn" onClick={handleIncrement}>+</button>
+        {product.availableSizes && product.availableSizes.length > 0 ? (
+          <div className="card-actions compact-mode">
+            <div className="size-selector">
+              {product.availableSizes.map(size => (
+                <button 
+                  key={size}
+                  className={`size-btn ${selectedSize === size ? 'active' : ''}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setSelectedSize(size);
+                  }}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+
+            {quantity > 0 ? (
+              <div className="quantity-controls compact">
+                <button className="qty-btn" onClick={handleDecrement}>-</button>
+                <span className="qty-value">{quantity}</span>
+                <button className="qty-btn" onClick={handleIncrement}>+</button>
+              </div>
+            ) : (
+              <button className="cart-icon-btn" onClick={handleAddToCart} aria-label="В корзину">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="9" cy="21" r="1"></circle>
+                  <circle cx="20" cy="21" r="1"></circle>
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+              </button>
+            )}
           </div>
         ) : (
-          <button className="view-btn" onClick={handleAddToCart}>
-            <span>В корзину</span>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="9" cy="21" r="1"></circle>
-              <circle cx="20" cy="21" r="1"></circle>
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-            </svg>
-          </button>
+          <div className="card-actions full-mode">
+            {quantity > 0 ? (
+              <div className="quantity-controls">
+                <button className="qty-btn" onClick={handleDecrement}>-</button>
+                <span className="qty-value">{quantity} шт.</span>
+                <button className="qty-btn" onClick={handleIncrement}>+</button>
+              </div>
+            ) : (
+              <button className="view-btn" onClick={handleAddToCart}>
+                <span>В корзину</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="9" cy="21" r="1"></circle>
+                  <circle cx="20" cy="21" r="1"></circle>
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>

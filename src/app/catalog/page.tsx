@@ -233,7 +233,7 @@ function CatalogContent() {
                 <li 
                   key={`side-${cat.id}`} 
                   className={draftFilters.category === cat.id ? 'active' : ''}
-                  onClick={() => setDraftFilters(prev => ({ ...prev, category: cat.id }))}
+                  onClick={() => handleTopCategoryClick(cat.id)}
                 >
                   <span className="name">{cat.name}</span>
                   <span className="count">{cat.count}</span>
