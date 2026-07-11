@@ -4,7 +4,7 @@ export interface Product {
   description: string;
   price: number;
   imageUrl: string;
-  category: 'hoodie' | 'mug' | 'sticker' | 'other';
+  category: 'hoodie' | 'tshirt' | 'mug' | 'sticker' | 'other';
   availableSizes?: string[]; // e.g. ['S', 'M', 'L', 'XL']
   availableColors?: string[]; // e.g. ['black', 'white', 'gray']
 }
