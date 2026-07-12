@@ -52,6 +52,18 @@ export default function Header() {
             </svg>
             <span className="nav-label">Каталог</span>
           </Link>
+          <Link href="/" className="nav-link desktop-link">
+            Университеты
+          </Link>
+          <Link href="/" className="nav-link desktop-link">
+            IT-мерч
+          </Link>
+          <Link href="/" className="nav-link desktop-link">
+            Новинки
+          </Link>
+          <Link href="/" className="nav-link desktop-link">
+            О нас
+          </Link>
         </nav>
         <form
           className="search-form"

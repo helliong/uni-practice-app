@@ -276,6 +276,10 @@
         display: flex;
       }
 
+      &.desktop-link {
+        display: none;
+      }
+
       &.active::after {
         display: none;
       }
