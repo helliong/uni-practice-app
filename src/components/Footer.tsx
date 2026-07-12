@@ -39,7 +39,7 @@ export default function Footer() {
               <Link href="/">Доставка и оплата</Link>
               <Link href="/">Возврат и обмен</Link>
               <Link href="/">FAQ</Link>
-              <Link href="/">Таблица размеров</Link>
+              <Link href="/sizes">Таблица размеров</Link>
             </nav>
           </div>
 
