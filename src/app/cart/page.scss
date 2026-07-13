@@ -48,6 +48,13 @@
     align-items: start;
   }
 
+  .cart-main-column {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
   .cart-items-card,
   .summary-card,
   .benefits-card,
@@ -587,6 +594,36 @@
     }
   }
 
+  .cart-inline-recommendations {
+    width: 100%;
+    margin-top: 2rem;
+    text-align: left;
+
+    h2 {
+      margin-bottom: 1rem;
+      color: var(--text-main);
+      font-family: var(--font-heading);
+      font-size: 1.6rem;
+      font-weight: 600;
+    }
+
+    .empty-recommendation-list {
+      display: flex;
+      gap: 1.5rem;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      scrollbar-width: none;
+
+      > * {
+        flex: 0 0 240px;
+      }
+    }
+
+    .recommendation-nav {
+      display: flex;
+    }
+  }
+
   .empty-recommendation-list {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -731,6 +768,10 @@
       grid-template-columns: 1fr;
     }
 
+    .cart-main-column {
+      min-width: 0;
+    }
+
     .cart-sidebar {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(280px, 0.85fr);
@@ -819,6 +860,12 @@
 
     .recommendation-nav {
       display: none;
+    }
+
+    .cart-inline-recommendations {
+      .recommendation-nav {
+        display: none;
+      }
     }
   }
 

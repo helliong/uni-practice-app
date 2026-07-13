@@ -20,7 +20,7 @@ export default function Header() {
   const isHomeActive = pathname === "/";
   const isCatalogActive = pathname?.startsWith('/catalog') || pathname?.startsWith('/product');
   const isFavoritesActive = pathname?.startsWith('/favorites');
-  const isCartActive = pathname?.startsWith('/cart');
+  const isCartActive = pathname?.startsWith('/cart') || pathname?.startsWith('/checkout');
   const isProfileActive = isProfilePopupOpen || pathname?.startsWith('/login') || pathname?.startsWith('/register');
 
   const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {

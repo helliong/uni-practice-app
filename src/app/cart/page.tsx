@@ -47,7 +47,8 @@ export default function CartPage() {
   const recommendations = mockProducts
     .filter((product) => !items.some((item) => item.product.id === product.id))
     .slice(0, 5);
-  const sidebarRecommendations = recommendations.slice(0, 2);
+  const shouldShowInlineRecommendations = totalItems < 5;
+  const sidebarRecommendations = shouldShowInlineRecommendations ? [] : recommendations.slice(0, 2);
 
   const handleRecommendedCart = (product: Product) => {
     addToCart(product, 1, product.availableSizes?.[0], product.availableColors?.[0]);
@@ -167,13 +168,14 @@ export default function CartPage() {
       </header>
 
       <div className="cart-layout">
-        <section className="cart-items-card" aria-label="Товары в корзине">
-          <div className="cart-table-head">
-            <span>Товар</span>
-            <span>Цена</span>
-            <span>Количество</span>
-            <span>Сумма</span>
-          </div>
+        <div className="cart-main-column">
+          <section className="cart-items-card" aria-label="Товары в корзине">
+            <div className="cart-table-head">
+              <span>Товар</span>
+              <span>Цена</span>
+              <span>Количество</span>
+              <span>Сумма</span>
+            </div>
 
           <div className="cart-list">
             {items.map((item) => {
@@ -260,7 +262,9 @@ export default function CartPage() {
             </svg>
             Очистить корзину
           </button>
-        </section>
+          </section>
+
+        </div>
 
         <aside className="cart-sidebar" aria-label="Итоги заказа">
           <section className="summary-card">
@@ -283,7 +287,7 @@ export default function CartPage() {
               <span>К оплате</span>
               <strong>{formatPrice(totalToPay)}</strong>
             </div>
-            <button className="checkout-btn" type="button">Оформить заказ</button>
+            <Link className="checkout-btn" href="/checkout">Оформить заказ</Link>
             <button className="quick-buy-btn" type="button">Купить в пару кликов</button>
           </section>
 
@@ -368,6 +372,45 @@ export default function CartPage() {
           )}
         </aside>
       </div>
+
+      {shouldShowInlineRecommendations && recommendations.length > 0 && (
+        <section className="cart-inline-recommendations" aria-label="Рекомендации">
+          <h2>Вам может понравиться</h2>
+          <div className="empty-recommendation-carousel">
+            {canScrollRecommendationsLeft && (
+              <button
+                className="recommendation-nav left"
+                type="button"
+                onClick={() => scrollEmptyRecommendations("left")}
+                aria-label="Листать рекомендации влево"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+            )}
+
+            <div className="empty-recommendation-list" ref={emptyRecommendationsRef} onScroll={checkRecommendationsScroll}>
+              {recommendations.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+
+            {canScrollRecommendationsRight && (
+              <button
+                className="recommendation-nav right"
+                type="button"
+                onClick={() => scrollEmptyRecommendations("right")}
+                aria-label="Листать рекомендации вправо"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </section>
+      )}
     </main>
   );
 }
