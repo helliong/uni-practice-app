@@ -3,50 +3,13 @@
 import Link from "next/link";
 import { useRef, useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import OrderRowCard from "@/components/OrderRowCard";
+import OrderRowCard, { type OrderRowProps } from "@/components/OrderRowCard";
 import ProductCard from "@/components/ProductCard";
 import { Product } from "@/types";
 import "./page.scss";
 
 // Mock data
-const mockOrders = [
-  {
-    id: "1",
-    orderNumber: "10245",
-    date: "16 мая, 2024",
-    status: "delivered" as const,
-    itemCount: 3,
-    totalPrice: 3690,
-    imageUrl: "/category-hoodie-premium.png",
-  },
-  {
-    id: "2",
-    orderNumber: "10201",
-    date: "8 мая, 2024",
-    status: "delivered" as const,
-    itemCount: 2,
-    totalPrice: 1880,
-    imageUrl: "/category-tshirt-premium.png",
-  },
-  {
-    id: "3",
-    orderNumber: "10177",
-    date: "25 апреля, 2024",
-    status: "in_transit" as const,
-    itemCount: 1,
-    totalPrice: 690,
-    imageUrl: "/category-mug-premium.png", // Assuming mug image
-  },
-  {
-    id: "4",
-    orderNumber: "10123",
-    date: "12 апреля, 2024",
-    status: "cancelled" as const,
-    itemCount: 2,
-    totalPrice: 1780,
-    imageUrl: "/category-accessories-premium.png", // Assuming bag/tote image
-  },
-];
+const recentOrders: OrderRowProps[] = [];
 
 const mockRecommendations: Product[] = [
   {
@@ -94,15 +57,17 @@ const mockRecommendations: Product[] = [
 ];
 
 export default function ProfilePage() {
-  const { data: session } = useSession();
+  const { status, update } = useSession();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
   const [profileData, setProfileData] = useState<{name?: string, email?: string, phone?: string, role?: string} | null>(null);
+  const [isProfileLoaded, setIsProfileLoaded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
+  const [editEmail, setEditEmail] = useState("");
 
   useEffect(() => {
     async function fetchProfile() {
@@ -113,26 +78,59 @@ export default function ProfilePage() {
           setProfileData(data);
           setEditName(data.name || "");
           setEditPhone(data.phone || "");
+          setEditEmail(data.email || "");
         }
       } catch (err) {
         console.error(err);
+      } finally {
+        setIsProfileLoaded(true);
       }
     }
-    if (session) {
+    if (status === "authenticated") {
       fetchProfile();
+    } else if (status === "unauthenticated") {
+      setIsProfileLoaded(true);
     }
-  }, [session]);
+  }, [status]);
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let input = e.target.value.replace(/\D/g, "");
+    if (!input) {
+      setEditPhone("");
+      return;
+    }
+    
+    if (input.startsWith("9")) input = "7" + input;
+    else if (input.startsWith("8")) input = "7" + input.substring(1);
+    
+    input = input.substring(0, 11);
+    
+    let formatted = "+";
+    if (input.length > 0) formatted += input.substring(0, 1);
+    if (input.length > 1) formatted += " (" + input.substring(1, 4);
+    if (input.length > 4) formatted += ") " + input.substring(4, 7);
+    if (input.length > 7) formatted += "-" + input.substring(7, 9);
+    if (input.length > 9) formatted += "-" + input.substring(9, 11);
+    
+    setEditPhone(formatted);
+  };
 
   const handleSaveProfile = async () => {
     try {
       const res = await fetch("/api/user/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editName, phone: editPhone }),
+        body: JSON.stringify({ name: editName, phone: editPhone, email: editEmail }),
       });
       if (res.ok) {
         const data = await res.json();
         setProfileData(data);
+        await update({
+          user: {
+            name: data.name,
+            email: data.email,
+          },
+        });
         setIsEditing(false);
       }
     } catch (err) {
@@ -141,8 +139,12 @@ export default function ProfilePage() {
   };
 
   const getInitials = () => {
-    const name = profileData?.name || session?.user?.name;
-    const email = profileData?.email || session?.user?.email;
+    if (status === "authenticated" && !isProfileLoaded) {
+      return "CC";
+    }
+
+    const name = profileData?.name;
+    const email = profileData?.email;
     if (name) {
       const parts = name.split(" ");
       if (parts.length > 1) return (parts[0][0] + parts[1][0]).toUpperCase();
@@ -151,6 +153,15 @@ export default function ProfilePage() {
     if (email) return email.substring(0, 2).toUpperCase();
     return "US";
   };
+
+  const isProfileLoading = status === "loading" || (status === "authenticated" && !isProfileLoaded);
+  const displayName = isProfileLoading
+    ? "Загрузка..."
+    : profileData?.name || profileData?.email?.split("@")[0] || "Без имени";
+  const displayEmail = isProfileLoading ? "" : profileData?.email;
+  const displayPhone = isProfileLoading ? "Загрузка..." : profileData?.phone || "Телефон не указан";
+  const displayRole = profileData?.role === "student" ? "Студент" : (profileData?.role || "Пользователь");
+
   const checkScroll = () => {
     if (scrollRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
@@ -195,43 +206,56 @@ export default function ProfilePage() {
             </div>
             <div className="user-details">
               {isEditing ? (
-                <div className="edit-form" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
-                  <input 
-                    type="text" 
-                    value={editName} 
-                    onChange={e => setEditName(e.target.value)} 
-                    placeholder="Имя"
-                    style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-card-soft)', color: 'var(--text-main)', width: '100%', minWidth: '200px' }}
-                  />
-                  <input 
-                    type="text" 
-                    value={editPhone} 
-                    onChange={e => setEditPhone(e.target.value)} 
-                    placeholder="Телефон"
-                    style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-card-soft)', color: 'var(--text-main)', width: '100%' }}
-                  />
-                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                    <button onClick={handleSaveProfile} style={{ padding: '0.5rem 1rem', background: 'var(--primary)', color: 'var(--primary-text)', borderRadius: '4px', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}>Сохранить</button>
-                    <button onClick={() => setIsEditing(false)} style={{ padding: '0.5rem 1rem', background: 'transparent', color: 'var(--text-secondary)', borderRadius: '4px', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.9rem' }}>Отмена</button>
+                <div className="edit-form-container">
+                  <div className="input-group">
+                    <label>Имя</label>
+                    <input 
+                      type="text" 
+                      value={editName} 
+                      onChange={e => setEditName(e.target.value)} 
+                      placeholder="Ваше имя"
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label>Email</label>
+                    <input 
+                      type="email" 
+                      value={editEmail} 
+                      onChange={e => setEditEmail(e.target.value)} 
+                      placeholder="Email"
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label>Телефон</label>
+                    <input 
+                      type="tel" 
+                      value={editPhone} 
+                      onChange={handlePhoneChange} 
+                      placeholder="+7 (999) 000-00-00"
+                    />
+                  </div>
+                  <div className="edit-actions">
+                    <button onClick={handleSaveProfile} className="btn-save">Сохранить</button>
+                    <button onClick={() => setIsEditing(false)} className="btn-cancel">Отмена</button>
                   </div>
                 </div>
               ) : (
                 <>
                   <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    {profileData?.name || session?.user?.name || session?.user?.email?.split('@')[0] || 'Без имени'}
+                    {displayName}
                     <button onClick={() => setIsEditing(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }} aria-label="Редактировать">
                       <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
                         <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                       </svg>
                     </button>
                   </h2>
-                  <p className="email">{profileData?.email || session?.user?.email}</p>
-                  <p className="phone">{profileData?.phone || "Телефон не указан"}</p>
+                  {displayEmail && <p className="email">{displayEmail}</p>}
+                  <p className="phone">{displayPhone}</p>
                   <span className="badge-student">
                     <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
                       <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z" />
                     </svg>
-                    {profileData?.role === 'student' ? 'Студент' : (profileData?.role || 'Пользователь')}
+                    {isProfileLoading ? "Загрузка..." : displayRole}
                   </span>
                 </>
               )}
@@ -243,7 +267,7 @@ export default function ProfilePage() {
         <div className="balances-card">
           <div className="balance-item">
             <span className="balance-label">Бонусный баланс</span>
-            <span className="balance-value">1 240 ₽</span>
+            <span className="balance-value">0 ₽</span>
             <Link href="/profile/bonuses/history" className="balance-link">
               История бонусов &rarr;
             </Link>
@@ -251,7 +275,7 @@ export default function ProfilePage() {
           <div className="balance-divider"></div>
           <div className="balance-item">
             <span className="balance-label">Скидка</span>
-            <span className="balance-value">10%</span>
+            <span className="balance-value">0%</span>
             <Link href="/profile/bonuses/rules" className="balance-link">
               Как это работает &rarr;
             </Link>
@@ -268,18 +292,16 @@ export default function ProfilePage() {
             </svg>
           </div>
           <div className="stat-info">
-            <span className="stat-value">12</span>
+            <span className="stat-value">0</span>
             <span className="stat-label">Заказов</span>
           </div>
         </div>
         <div className="stat-item">
-          <div className="stat-icon-wrapper">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-            </svg>
+          <div className="stat-icon-wrapper stat-ruble-icon">
+            ₽
           </div>
           <div className="stat-info">
-            <span className="stat-value">6 570 ₽</span>
+            <span className="stat-value">0 ₽</span>
             <span className="stat-label">Потрачено</span>
           </div>
         </div>
@@ -291,7 +313,7 @@ export default function ProfilePage() {
             </svg>
           </div>
           <div className="stat-info">
-            <span className="stat-value">1 240 ₽</span>
+            <span className="stat-value">0 ₽</span>
             <span className="stat-label">Бонусов</span>
           </div>
         </div>
@@ -302,7 +324,7 @@ export default function ProfilePage() {
             </svg>
           </div>
           <div className="stat-info">
-            <span className="stat-value">4</span>
+            <span className="stat-value">0</span>
             <span className="stat-label">Университета</span>
           </div>
         </div>
@@ -314,24 +336,39 @@ export default function ProfilePage() {
             </svg>
           </div>
           <div className="stat-info">
-            <span className="stat-value">3</span>
+            <span className="stat-value">0</span>
             <span className="stat-label">Подписки</span>
           </div>
         </div>
       </div>
 
-      {/* Recent Orders Block */}
-      <div className="recent-orders-card">
-        <div className="orders-header">
+      {/* Recent Orders */}
+      <div className="recent-orders-section">
+        <div className="section-header">
           <h3>Последние заказы</h3>
-          <Link href="/profile/orders" className="view-all-link">
-            Смотреть все заказы &rarr;
-          </Link>
+          <Link href="/profile/orders" className="view-all-link">Смотреть все заказы &rarr;</Link>
         </div>
         <div className="orders-list">
-          {mockOrders.map((order) => (
-            <OrderRowCard key={order.id} {...order} />
-          ))}
+          {recentOrders.length > 0 ? (
+            recentOrders.map((order) => (
+              <OrderRowCard key={order.id} {...order} />
+            ))
+          ) : (
+            <div className="orders-empty-state">
+              <div className="empty-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+                  <path d="M3 6h18" />
+                  <path d="M16 10a4 4 0 0 1-8 0" />
+                </svg>
+              </div>
+              <div className="empty-content">
+                <h4>У вас пока нет заказов</h4>
+                <p>Когда вы оформите первый заказ, он появится здесь вместе со статусом доставки и деталями.</p>
+              </div>
+              <Link href="/catalog" className="empty-action">Перейти в каталог</Link>
+            </div>
+          )}
         </div>
       </div>
 

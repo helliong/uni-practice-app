@@ -1,69 +1,372 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { useCart } from '../../context/CartContext';
-import './page.scss';
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { useCart } from "@/context/CartContext";
+import { useFavorites } from "@/context/FavoritesContext";
+import { mockProducts } from "@/lib/mockData";
+import { generateSlug } from "@/lib/utils";
+import ProductCard from "@/components/ProductCard";
+import { Product } from "@/types";
+import "./page.scss";
+
+const colorNames: Record<string, string> = {
+  black: "Черный",
+  white: "Натуральный",
+  blue: "Темно-синий",
+  gray: "Серый",
+};
+
+function formatPrice(price: number) {
+  return `${price.toLocaleString("ru-RU")} ₽`;
+}
+
+function getProductUrl(product: Product) {
+  return `/product/${product.id}-${generateSlug(product.name)}`;
+}
+
+function getItemsWord(count: number) {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+
+  if (mod10 === 1 && mod100 !== 11) return "товар";
+  if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return "товара";
+  return "товаров";
+}
 
 export default function CartPage() {
-  const { items, removeFromCart, cartTotal } = useCart();
+  const { items, addToCart, updateQuantity, clearCart, cartTotal } = useCart();
+  const { isFavorite, addFavorite, removeFavorite } = useFavorites();
+  const emptyRecommendationsRef = useRef<HTMLDivElement>(null);
+  const [canScrollRecommendationsLeft, setCanScrollRecommendationsLeft] = useState(false);
+  const [canScrollRecommendationsRight, setCanScrollRecommendationsRight] = useState(false);
+  const totalItems = items.reduce((total, item) => total + item.quantity, 0);
+  const deliveryPrice = cartTotal >= 3000 || cartTotal === 0 ? 0 : 300;
+  const totalToPay = cartTotal + deliveryPrice;
+  const recommendations = mockProducts
+    .filter((product) => !items.some((item) => item.product.id === product.id))
+    .slice(0, 5);
+  const sidebarRecommendations = recommendations.slice(0, 2);
+
+  const handleRecommendedCart = (product: Product) => {
+    addToCart(product, 1, product.availableSizes?.[0], product.availableColors?.[0]);
+  };
+
+  const handleFavoriteToggle = (product: Product) => {
+    if (isFavorite(product.id)) {
+      removeFavorite(product.id);
+      return;
+    }
+
+    addFavorite(product);
+  };
+
+  const checkRecommendationsScroll = () => {
+    const element = emptyRecommendationsRef.current;
+    if (!element) return;
+
+    const { scrollLeft, scrollWidth, clientWidth } = element;
+    const hasOverflow = scrollWidth > clientWidth + 1;
+
+    setCanScrollRecommendationsLeft(hasOverflow && scrollLeft > 0);
+    setCanScrollRecommendationsRight(hasOverflow && Math.ceil(scrollLeft + clientWidth) < scrollWidth);
+  };
+
+  const scrollEmptyRecommendations = (direction: "left" | "right") => {
+    emptyRecommendationsRef.current?.scrollBy({
+      left: direction === "left" ? -280 : 280,
+      behavior: "smooth",
+    });
+  };
+
+  useEffect(() => {
+    checkRecommendationsScroll();
+    window.addEventListener("resize", checkRecommendationsScroll);
+
+    return () => window.removeEventListener("resize", checkRecommendationsScroll);
+  }, [recommendations.length]);
 
   if (items.length === 0) {
     return (
       <main className="cart-page">
-        <h1>Корзина</h1>
-        <p className="empty-msg">Ваша корзина пуста.</p>
-        <Link href="/" className="back-link">Вернуться к покупкам</Link>
+        <nav className="cart-breadcrumbs" aria-label="Хлебные крошки">
+          <Link href="/">Главная</Link>
+          <span>&gt;</span>
+          <span>Корзина</span>
+        </nav>
+
+        <section className="cart-empty">
+          <div className="empty-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+              <path d="M3 6h18" />
+              <path d="M16 10a4 4 0 0 1-8 0" />
+            </svg>
+          </div>
+          <h1>Корзина пуста</h1>
+          <p>Добавьте товары из каталога, и они появятся здесь.</p>
+          <Link href="/catalog" className="primary-action">Перейти в каталог</Link>
+        </section>
+
+        {recommendations.length > 0 && (
+            <section className="empty-recommendations" aria-label="Рекомендации">
+              <h2>Рекомендовано для вас</h2>
+              <div className="empty-recommendation-carousel">
+                {canScrollRecommendationsLeft && (
+                  <button
+                    className="recommendation-nav left"
+                    type="button"
+                    onClick={() => scrollEmptyRecommendations("left")}
+                    aria-label="Листать рекомендации влево"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                  </button>
+                )}
+
+                <div className="empty-recommendation-list" ref={emptyRecommendationsRef} onScroll={checkRecommendationsScroll}>
+                  {recommendations.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+
+                {canScrollRecommendationsRight && (
+                  <button
+                    className="recommendation-nav right"
+                    type="button"
+                    onClick={() => scrollEmptyRecommendations("right")}
+                    aria-label="Листать рекомендации вправо"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </section>
+        )}
       </main>
     );
   }
 
   return (
     <main className="cart-page">
-      <h1>Корзина</h1>
-      
-      <div className="cart-container">
-        <div className="cart-items">
-          {items.map((item, index) => (
-            <div key={`${item.product.id}-${index}`} className="cart-item">
-              <div className="item-image">
-                <Image 
-                  src={item.product.imageUrl} 
-                  alt={item.product.name} 
-                  width={100} 
-                  height={100} 
-                  unoptimized
-                />
-              </div>
-              <div className="item-details">
-                <h3><Link href={`/product/${item.product.id}`}>{item.product.name}</Link></h3>
-                <div className="item-options">
-                  {item.selectedSize && <span>Размер: {item.selectedSize}</span>}
-                  {item.selectedColor && <span>Цвет: {item.selectedColor}</span>}
-                </div>
-                <div className="item-price-qty">
-                  <span className="price">{item.product.price.toLocaleString('ru-RU')} ₽</span>
-                  <span className="qty">x {item.quantity}</span>
-                </div>
-              </div>
-              <button 
-                className="remove-btn" 
-                onClick={() => removeFromCart(item.product.id)}
-              >
-                &times;
-              </button>
-            </div>
-          ))}
-        </div>
-        
-        <div className="cart-summary">
-          <h2>Итого</h2>
-          <div className="summary-row">
-            <span>Сумма:</span>
-            <span>{cartTotal.toLocaleString('ru-RU')} ₽</span>
+      <nav className="cart-breadcrumbs" aria-label="Хлебные крошки">
+        <Link href="/">Главная</Link>
+        <span>&gt;</span>
+        <span>Корзина</span>
+      </nav>
+
+      <header className="cart-header">
+        <h1>Корзина</h1>
+        <p>
+          {totalItems} {getItemsWord(totalItems)} на сумму {formatPrice(cartTotal)}
+        </p>
+      </header>
+
+      <div className="cart-layout">
+        <section className="cart-items-card" aria-label="Товары в корзине">
+          <div className="cart-table-head">
+            <span>Товар</span>
+            <span>Цена</span>
+            <span>Количество</span>
+            <span>Сумма</span>
           </div>
-          <button className="checkout-btn">Оформить заказ</button>
-        </div>
+
+          <div className="cart-list">
+            {items.map((item) => {
+              const rowKey = `${item.product.id}-${item.selectedSize || "none"}-${item.selectedColor || "none"}`;
+              const productUrl = getProductUrl(item.product);
+              const rowTotal = item.product.price * item.quantity;
+
+              return (
+                <article className="cart-row" key={rowKey}>
+                  <Link href={productUrl} className="cart-product-image">
+                    <Image
+                      src={item.product.imageUrl}
+                      alt={item.product.name}
+                      width={132}
+                      height={132}
+                      unoptimized
+                    />
+                  </Link>
+
+                  <div className="cart-product-info">
+                    <Link href={productUrl} className="cart-product-title">
+                      {item.product.name}
+                    </Link>
+                    <div className="cart-product-options">
+                      {item.selectedColor && <span>Цвет: {colorNames[item.selectedColor] || item.selectedColor}</span>}
+                      {item.selectedSize && <span>Размер: {item.selectedSize}</span>}
+                    </div>
+                  </div>
+
+                  <span className="cart-price">{formatPrice(item.product.price)}</span>
+
+                  <div className="quantity-control" aria-label={`Количество ${item.product.name}`}>
+                    <button
+                      type="button"
+                      onClick={() => updateQuantity(item.product.id, item.quantity - 1, item.selectedSize, item.selectedColor)}
+                      aria-label="Уменьшить количество"
+                    >
+                      -
+                    </button>
+                    <span>{item.quantity}</span>
+                    <button
+                      type="button"
+                      onClick={() => updateQuantity(item.product.id, item.quantity + 1, item.selectedSize, item.selectedColor)}
+                      aria-label="Увеличить количество"
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  <span className="cart-row-total">{formatPrice(rowTotal)}</span>
+
+                  <div className="cart-row-actions">
+                    <button
+                      className={`cart-favorite-btn ${isFavorite(item.product.id) ? "active" : ""}`}
+                      type="button"
+                      onClick={() => handleFavoriteToggle(item.product)}
+                      aria-label={isFavorite(item.product.id) ? "Убрать из избранного" : "Добавить в избранное"}
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 21.35a1 1 0 0 1-.64-.23C5.2 15.98 2 12.74 2 8.75A5.73 5.73 0 0 1 7.75 3 6.27 6.27 0 0 1 12 4.75 6.27 6.27 0 0 1 16.25 3 5.73 5.73 0 0 1 22 8.75c0 3.99-3.2 7.23-9.36 12.37a1 1 0 0 1-.64.23Z" />
+                      </svg>
+                    </button>
+                    <button
+                      className="remove-row"
+                      type="button"
+                      onClick={() => updateQuantity(item.product.id, 0, item.selectedSize, item.selectedColor)}
+                      aria-label="Удалить товар"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+
+          <button className="clear-cart-btn" type="button" onClick={clearCart}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M3 6h18" />
+              <path d="M8 6V4h8v2" />
+              <path d="m19 6-1 14H6L5 6" />
+              <path d="M10 11v5" />
+              <path d="M14 11v5" />
+            </svg>
+            Очистить корзину
+          </button>
+        </section>
+
+        <aside className="cart-sidebar" aria-label="Итоги заказа">
+          <section className="summary-card">
+            <h2>Итого</h2>
+            <div className="summary-lines">
+              <div>
+                <span>{totalItems} {getItemsWord(totalItems)}</span>
+                <strong>{formatPrice(cartTotal)}</strong>
+              </div>
+              <div>
+                <span>Скидка</span>
+                <strong>- 0 ₽</strong>
+              </div>
+              <div>
+                <span>Доставка</span>
+                <strong>{deliveryPrice === 0 ? "Бесплатно" : formatPrice(deliveryPrice)}</strong>
+              </div>
+            </div>
+            <div className="summary-total">
+              <span>К оплате</span>
+              <strong>{formatPrice(totalToPay)}</strong>
+            </div>
+            <button className="checkout-btn" type="button">Оформить заказ</button>
+            <button className="quick-buy-btn" type="button">Купить в пару кликов</button>
+          </section>
+
+          <section className="benefits-card" aria-label="Преимущества">
+            <div className="benefit-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M3 7h11v10H3z" />
+                <path d="M14 10h4l3 3v4h-7z" />
+                <circle cx="7" cy="18" r="2" />
+                <circle cx="18" cy="18" r="2" />
+              </svg>
+              <div>
+                <strong>Бесплатная доставка</strong>
+                <span>По России при заказе от 3 000 ₽</span>
+              </div>
+            </div>
+            <div className="benefit-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M3 12a9 9 0 0 1 15.5-6.2L21 8" />
+                <path d="M21 3v5h-5" />
+                <path d="M21 12a9 9 0 0 1-15.5 6.2L3 16" />
+                <path d="M3 21v-5h5" />
+              </svg>
+              <div>
+                <strong>Возврат и обмен</strong>
+                <span>В течение 14 дней</span>
+              </div>
+            </div>
+            <div className="benefit-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>
+              <div>
+                <strong>Поддержка 24/7</strong>
+                <span>Мы всегда на связи</span>
+              </div>
+            </div>
+          </section>
+
+          {sidebarRecommendations.length > 0 && (
+            <section className="cart-recommendations">
+              <h2>Вам может понравиться</h2>
+              <div className="recommendation-list">
+                {sidebarRecommendations.map((product) => (
+                  <article className="recommendation-card" key={product.id}>
+                    <button
+                      className={`favorite-btn ${isFavorite(product.id) ? "active" : ""}`}
+                      type="button"
+                      onClick={() => handleFavoriteToggle(product)}
+                      aria-label={isFavorite(product.id) ? "Убрать из избранного" : "Добавить в избранное"}
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 21.35a1 1 0 0 1-.64-.23C5.2 15.98 2 12.74 2 8.75A5.73 5.73 0 0 1 7.75 3 6.27 6.27 0 0 1 12 4.75 6.27 6.27 0 0 1 16.25 3 5.73 5.73 0 0 1 22 8.75c0 3.99-3.2 7.23-9.36 12.37a1 1 0 0 1-.64.23Z" />
+                      </svg>
+                    </button>
+                    <Link href={getProductUrl(product)} className="recommendation-image">
+                      <Image src={product.imageUrl} alt={product.name} width={190} height={128} unoptimized />
+                    </Link>
+                    <Link href={getProductUrl(product)} className="recommendation-title">
+                      {product.name}
+                    </Link>
+                    <div className="recommendation-footer">
+                      <strong>{formatPrice(product.price)}</strong>
+                      <button
+                        className="recommendation-cart"
+                        type="button"
+                        onClick={() => handleRecommendedCart(product)}
+                        aria-label="Добавить в корзину"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <circle cx="9" cy="21" r="1" />
+                          <circle cx="20" cy="21" r="1" />
+                          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                        </svg>
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
+        </aside>
       </div>
     </main>
   );

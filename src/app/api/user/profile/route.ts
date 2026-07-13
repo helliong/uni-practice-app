@@ -42,14 +42,21 @@ export async function PUT(request: Request) {
 
   try {
     const body = await request.json();
-    const { name, phone } = body;
+    const { name, phone, email } = body;
+
+    const updateData: any = { name, phone };
+    if (email && email.trim() !== "") {
+      // Check if email is already taken by another user
+      const existingUser = await prisma.user.findUnique({ where: { email } });
+      if (existingUser && existingUser.id !== session.user.id) {
+        return NextResponse.json({ error: "Email already in use" }, { status: 400 });
+      }
+      updateData.email = email;
+    }
 
     const updatedUser = await prisma.user.update({
       where: { email: session.user.email },
-      data: {
-        name,
-        phone,
-      },
+      data: updateData,
       select: {
         id: true,
         name: true,
