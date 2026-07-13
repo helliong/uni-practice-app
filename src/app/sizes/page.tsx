@@ -1,5 +1,8 @@
+﻿"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { type ComponentType, type MouseEvent, useState } from "react";
 import {
   FiChevronRight,
   FiInfo,
@@ -10,14 +13,36 @@ import { LuShirt } from "react-icons/lu";
 import { PiHoodie, PiPants, PiTote } from "react-icons/pi";
 import "./page.scss";
 
+type SizeCategoryId =
+  | "hoodies"
+  | "tshirts"
+  | "sweatshirts"
+  | "pants"
+  | "totes"
+  | "accessories";
+
 const categories = [
-  { name: "Худи", icon: PiHoodie, active: true },
-  { name: "Футболки", icon: LuShirt },
-  { name: "Свитшоты", icon: PiHoodie },
-  { name: "Штаны", icon: PiPants },
-  { name: "Шопперы", icon: PiTote },
-  { name: "Аксессуары", icon: FiShoppingBag },
-];
+  { id: "hoodies", name: "Худи", icon: PiHoodie, href: "#hoodies" },
+  { id: "tshirts", name: "Футболки", icon: LuShirt, href: "#tshirts" },
+  { id: "sweatshirts", name: "Свитшоты", icon: PiHoodie, href: "#sweatshirts" },
+  { id: "pants", name: "Штаны", icon: PiPants, href: "#pants" },
+  { id: "totes", name: "Шопперы", icon: PiTote, href: "#totes" },
+  { id: "accessories", name: "Аксессуары", icon: FiShoppingBag, href: "#accessories" },
+] satisfies Array<{
+  id: SizeCategoryId;
+  name: string;
+  icon: ComponentType<{ "aria-hidden"?: boolean }>;
+  href: `#${SizeCategoryId}`;
+}>;
+
+const categoryNames: Record<SizeCategoryId, string> = {
+  hoodies: "Худи",
+  tshirts: "Футболки",
+  sweatshirts: "Свитшоты",
+  pants: "Штаны",
+  totes: "Шопперы",
+  accessories: "Аксессуары",
+};
 
 const hoodieSizes = [
   { size: "XS", chest: "49-51", length: "64-66", sleeve: "59-61" },
@@ -26,6 +51,15 @@ const hoodieSizes = [
   { size: "L", chest: "58-60", length: "70-72", sleeve: "65-67" },
   { size: "XL", chest: "61-63", length: "72-74", sleeve: "67-69" },
   { size: "XXL", chest: "64-66", length: "74-76", sleeve: "69-71" },
+];
+
+const tshirtSizes = [
+  { size: "XS", chest: "47-49", length: "64-66", sleeve: "19-20" },
+  { size: "S", chest: "50-52", length: "66-68", sleeve: "20-21" },
+  { size: "M", chest: "53-55", length: "68-70", sleeve: "21-22" },
+  { size: "L", chest: "56-58", length: "70-72", sleeve: "22-23" },
+  { size: "XL", chest: "59-61", length: "72-74", sleeve: "23-24" },
+  { size: "XXL", chest: "62-64", length: "74-76", sleeve: "24-25" },
 ];
 
 const measureSteps = [
@@ -50,6 +84,18 @@ const measureSteps = [
 ];
 
 export default function SizesPage() {
+  const [selectedCategory, setSelectedCategory] =
+    useState<SizeCategoryId>("hoodies");
+
+  const handleCategoryClick = (
+    event: MouseEvent<HTMLAnchorElement>,
+    id: SizeCategoryId,
+  ) => {
+    event.preventDefault();
+    window.history.replaceState(null, "", `#${id}`);
+    setSelectedCategory(id);
+  };
+
   return (
     <main className="sizes-page">
       <div className="sizes-header">
@@ -67,19 +113,21 @@ export default function SizesPage() {
       </div>
 
       <section className="size-tabs" aria-label="Категории размеров">
-        {categories.map(({ name, icon: Icon, active }) => (
-          <button
-            className={`size-tab ${active ? "active" : ""}`}
-            type="button"
+        {categories.map(({ id, name, icon: Icon, href }) => (
+          <Link
+            className={`size-tab ${selectedCategory === id ? "active" : ""}`}
+            href={href}
             key={name}
+            onClick={(event) => handleCategoryClick(event, id)}
           >
             <Icon aria-hidden="true" />
             <span>{name}</span>
-          </button>
+          </Link>
         ))}
       </section>
 
-      <section className="sizes-main">
+      {selectedCategory === "hoodies" && (
+      <section className="sizes-main" id="hoodies">
         <div className="sizes-table-section">
           <h2>Худи унисекс</h2>
           <p>Все измерения указаны в сантиметрах.</p>
@@ -137,6 +185,77 @@ export default function SizesPage() {
           />
         </div>
       </section>
+      )}
+
+      {selectedCategory === "tshirts" && (
+      <section className="sizes-main sizes-main--tshirt" id="tshirts">
+        <div className="sizes-table-section">
+          <h2>Футболки унисекс</h2>
+          <p>Все измерения указаны в сантиметрах. Для свободной посадки выбирайте больший размер.</p>
+
+          <div className="sizes-table-wrap">
+            <table className="sizes-table">
+              <thead>
+                <tr>
+                  <th>Размер</th>
+                  <th>Ширина груди (A)</th>
+                  <th>Длина изделия (B)</th>
+                  <th>Длина рукава (C)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tshirtSizes.map((item) => (
+                  <tr key={item.size}>
+                    <td>{item.size}</td>
+                    <td>{item.chest}</td>
+                    <td>{item.length}</td>
+                    <td>{item.sleeve}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="size-note">
+            <FiInfo aria-hidden="true" />
+            <div>
+              <strong>Если сомневаетесь между двумя размерами, выбирайте больший</strong>
+              <span>Футболка будет сидеть свободнее и комфортнее после стирки.</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="size-visual" aria-label="Схема измерений футболки">
+          <Image
+            className="size-image-light"
+            src="/size-guide-tshirt-light.png"
+            alt="Схема измерений футболки"
+            width={1256}
+            height={1256}
+          />
+          <Image
+            className="size-image-dark"
+            src="/size-guide-tshirt-transparent.png"
+            alt="Схема измерений футболки"
+            width={1256}
+            height={1256}
+          />
+        </div>
+      </section>
+      )}
+
+      {selectedCategory !== "hoodies" && selectedCategory !== "tshirts" && (
+        <section className="sizes-empty-state" id={selectedCategory}>
+          <FiInfo aria-hidden="true" />
+          <div>
+            <h2>{categoryNames[selectedCategory]}</h2>
+            <p>
+              Таблица размеров для этой категории появится позже. Если сомневаетесь
+              в размере, напишите в поддержку.
+            </p>
+          </div>
+        </section>
+      )}
 
       <section className="measure-section">
         <h2>Как снять мерки</h2>
