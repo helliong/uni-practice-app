@@ -668,41 +668,241 @@
 
   @media (max-width: 650px) {
     padding: 1.25rem;
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+
+    .sizes-header {
+      margin-bottom: 1.5rem;
+
+      .breadcrumbs {
+        overflow-x: auto;
+        white-space: nowrap;
+        margin-bottom: 1rem;
+        padding-bottom: 0.25rem;
+        scrollbar-width: none;
+
+        &::-webkit-scrollbar {
+          display: none;
+        }
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      p {
+        font-size: 0.92rem;
+      }
+    }
 
     .size-tabs {
-      margin-left: -1.25rem;
-      margin-right: -1.25rem;
-      border-left: none;
-      border-right: none;
-      border-radius: 0;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border: none;
+      background: transparent;
+      overflow: visible;
+
+      .size-tab {
+        min-width: 0;
+        min-height: 56px;
+        flex-direction: column;
+        gap: 0.5rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg-card);
+        border-bottom-width: 1px;
+
+        svg {
+          width: 20px;
+          height: 20px;
+        }
+
+        span {
+          font-size: 0.82rem;
+        }
+
+        &.active {
+          border-color: var(--catalog-accent-border);
+        }
+      }
     }
 
     .sizes-main {
       gap: 1.25rem;
     }
 
-    .size-visual {
-      padding: 0.75rem;
+    .sizes-table-section {
+      h2 {
+        font-size: 1.4rem;
+      }
+
+      > p {
+        font-size: 0.9rem;
+      }
     }
 
-    .sizes-table th,
-    .sizes-table td {
-      padding: 0.85rem;
-      font-size: 0.85rem;
+    .size-visual {
+      padding: 0.75rem;
+      min-height: 0;
+      box-shadow: none;
+
+      img {
+        max-height: 420px;
+      }
+    }
+
+    .sizes-table-wrap {
+      overflow: hidden;
+      border-radius: 8px;
+      box-shadow: none;
+    }
+
+    .sizes-table {
+      min-width: 0;
+      table-layout: fixed;
+
+      th,
+      td {
+        padding: 0.75rem 0.55rem;
+        font-size: 0.78rem;
+        line-height: 1.25;
+        word-break: normal;
+      }
+
+      th {
+        text-align: center;
+      }
+    }
+
+    .size-note {
+      padding: 1rem;
+      margin-top: 1rem;
+      box-shadow: none;
+    }
+
+    .measure-section {
+      > h2 {
+        font-size: 1.35rem;
+      }
     }
 
     .measure-card {
-      min-height: 250px;
+      min-height: 230px;
       padding: 1.25rem;
+      box-shadow: none;
+    }
+
+    .measure-copy {
+      gap: 0.75rem;
+
+      h3 {
+        font-size: 0.95rem;
+      }
+
+      p {
+        font-size: 0.84rem;
+      }
     }
 
     .support-banner {
       align-items: stretch;
       flex-direction: column;
+      padding: 1rem;
+      box-shadow: none;
+    }
+
+    .support-copy {
+      align-items: flex-start;
+
+      h2 {
+        font-size: 0.95rem;
+      }
+
+      p {
+        font-size: 0.85rem;
+        line-height: 1.45;
+      }
     }
 
     .support-link {
       width: 100%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.75rem;
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+
+    .sizes-header {
+      .breadcrumbs {
+        display: none;
+      }
+
+      h1 {
+        font-size: 1.75rem;
+      }
+
+      p {
+        font-size: 0.88rem;
+      }
+    }
+
+    .size-tabs {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.45rem;
+
+      .size-tab {
+        min-height: 52px;
+        gap: 0.25rem;
+      }
+    }
+
+    .sizes-table {
+      th,
+      td {
+        padding: 0.65rem 0.35rem;
+        font-size: 0.7rem;
+      }
+
+      td {
+        font-size: 0.76rem;
+      }
+    }
+
+    .size-note {
+      gap: 0.75rem;
+
+      strong {
+        font-size: 0.88rem;
+      }
+    }
+
+    .size-visual {
+      padding: 0.5rem;
+
+      img {
+        max-height: 300px;
+      }
+    }
+
+    .measure-card {
+      min-height: 250px;
+      padding: 1rem;
+    }
+
+    .measure-figure {
+      width: 210px;
+      height: 108px;
+    }
+
+    .support-copy {
+      gap: 0.75rem;
+
+      > svg {
+        width: 30px;
+        height: 30px;
+      }
     }
   }
 }

@@ -282,6 +282,10 @@ export default function RegisterPage() {
               <span>Зарегистрироваться через GitHub</span>
             </button>
           </div>
+
+          <p className="login-redirect-link">
+            Уже есть аккаунт? <Link href="/login">Войти</Link>
+          </p>
         </div>
       </div>
 
