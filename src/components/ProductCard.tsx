@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import Link from 'next/link';
 import Image from 'next/image';
@@ -24,9 +24,16 @@ const categoryNames: Record<string, string> = {
 export default function ProductCard({ product }: { product: Product }) {
   const { items, addToCart, updateQuantity } = useCart();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
-  const favorite = isFavorite(product.id);
-
+  
+  const [isMounted, setIsMounted] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | undefined>(product.availableSizes?.[0]);
+
+  // Fix hydration mismatch: wait until mounted to read from localStorage-backed contexts
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const favorite = isMounted ? isFavorite(product.id) : false;
   const defaultColor = product.availableColors?.[0];
 
   const cartItem = items.find(item => 
@@ -34,7 +41,7 @@ export default function ProductCard({ product }: { product: Product }) {
     item.selectedSize === selectedSize && 
     item.selectedColor === defaultColor
   );
-  const quantity = cartItem ? cartItem.quantity : 0;
+  const quantity = isMounted && cartItem ? cartItem.quantity : 0;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();

@@ -54,6 +54,8 @@ function buildCartState(items: CartItem[]) {
   };
 }
 
+import { useFavoritesStore } from "./favoritesStore";
+
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
@@ -70,6 +72,9 @@ export const useCartStore = create<CartState>()(
   },
 
   addToCart: (product, quantity, size, color) => {
+    // Automatically remove from favorites when adding to cart
+    useFavoritesStore.getState().removeFavorite(product.id);
+
     const currentItems = get().items;
     const existingItemIndex = currentItems.findIndex(
       (item) => item.product.id === product.id && item.selectedSize === size && item.selectedColor === color,

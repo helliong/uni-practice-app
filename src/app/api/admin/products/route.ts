@@ -62,6 +62,7 @@ export async function POST(request: Request) {
         price: Number(data.price),
         oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
         imageUrl: data.imageUrl,
+        images: data.images || (data.imageUrl ? [data.imageUrl] : []),
         category: data.category,
         availableSizes: data.availableSizes || [],
         availableColors: data.availableColors || [],

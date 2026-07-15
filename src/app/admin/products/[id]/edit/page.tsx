@@ -1,14 +1,22 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 
-export default function NewProductPage() {
+export default function EditProductPage() {
   const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
   const { data: session } = useSession();
+  
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [initialData, setInitialData] = useState<any>(null);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  
+  const [existingImages, setExistingImages] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -18,7 +26,6 @@ export default function NewProductPage() {
   
   const [category, setCategory] = useState("hoodie");
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
-  const [universities, setUniversities] = useState<any[]>([]);
 
   const sizesList = ["S", "M", "L", "XL"];
 
@@ -29,11 +36,29 @@ export default function NewProductPage() {
   };
 
   useEffect(() => {
-    if (session?.user?.role === "SUPERADMIN") {
-      fetch("/api/admin/universities") // we don't have this, but wait, we have Server Action getPublicUniversities!
-        .catch(() => {});
-    }
-  }, [session]);
+    if (!id) return;
+    fetch(`/api/admin/products/${id}`)
+      .then(res => {
+        if (!res.ok) throw new Error("Товар не найден");
+        return res.json();
+      })
+      .then(data => {
+        setInitialData(data);
+        setPriceStr(data.price?.toString() || "");
+        if (data.oldPrice) setOldPriceStr(data.oldPrice.toString());
+        setCategory(data.category || "hoodie");
+        setSelectedSizes(data.availableSizes || []);
+        
+        const images = data.images && data.images.length > 0 ? data.images : (data.imageUrl ? [data.imageUrl] : []);
+        setExistingImages(images);
+        
+        setInitialLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setInitialLoading(false);
+      });
+  }, [id]);
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value.replace(/\D/g, "");
@@ -55,11 +80,23 @@ export default function NewProductPage() {
 
   const handleFiles = (newFiles: FileList | File[]) => {
     const fileArray = Array.from(newFiles);
-    const totalFiles = [...files, ...fileArray].slice(0, 8);
-    setFiles(totalFiles);
+    const totalCount = existingImages.length + files.length + fileArray.length;
+    let allowedFiles = fileArray;
+    if (totalCount > 8) {
+      allowedFiles = fileArray.slice(0, Math.max(0, 8 - (existingImages.length + files.length)));
+    }
+    
+    const newTotalFiles = [...files, ...allowedFiles];
+    setFiles(newTotalFiles);
     
     previewUrls.forEach(url => URL.revokeObjectURL(url));
-    setPreviewUrls(totalFiles.map(f => URL.createObjectURL(f)));
+    setPreviewUrls(newTotalFiles.map(f => URL.createObjectURL(f)));
+  };
+
+  const removeExistingImage = (idx: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setExistingImages(prev => prev.filter((_, i) => i !== idx));
   };
 
   const removeFile = (idx: number, e: React.MouseEvent) => {
@@ -92,7 +129,7 @@ export default function NewProductPage() {
 
     const formData = new FormData(e.currentTarget);
 
-    if (files.length === 0) {
+    if (existingImages.length === 0 && files.length === 0) {
       setError("Пожалуйста, загрузите хотя бы одно изображение.");
       setLoading(false);
       return;
@@ -105,7 +142,7 @@ export default function NewProductPage() {
     }
 
     try {
-      // 1. Upload images
+      // 1. Upload new images
       const uploadedUrls: string[] = [];
       for (const f of files) {
         const uploadData = new FormData();
@@ -120,33 +157,34 @@ export default function NewProductPage() {
         uploadedUrls.push(uploadResult.url);
       }
       
-      const imageUrl = uploadedUrls[0];
+      const finalImages = [...existingImages, ...uploadedUrls];
+      const imageUrl = finalImages[0] || "";
 
-      // 2. Create product
+      // 2. Update product
       const productData = {
         name: formData.get("name"),
-        price: priceStr.replace(/\D/g, ""), // clean up price
+        price: priceStr.replace(/\D/g, ""),
         oldPrice: oldPriceStr ? oldPriceStr.replace(/\D/g, "") : null,
         category: formData.get("category"),
         description: formData.get("description"),
         materials: formData.get("materials") ? formData.get("materials")?.toString().split(",").map(s => s.trim()).filter(Boolean) : [],
         imageUrl: imageUrl,
-        images: uploadedUrls,
+        images: finalImages,
         stockCount: formData.get("stockCount"),
-        universityId: formData.get("universityId") || null,
+        universityId: formData.get("universityId") || initialData?.universityId,
         availableSizes: (category === "hoodie" || category === "tshirt") ? selectedSizes : [],
-        isPublished: true, // simplified for now
+        isPublished: true, 
       };
 
-      const res = await fetch("/api/admin/products", {
-        method: "POST",
+      const res = await fetch(`/api/admin/products/${id}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(productData),
       });
 
-      if (!res.ok) throw new Error("Ошибка создания товара");
+      if (!res.ok) throw new Error("Ошибка обновления товара");
 
       router.push("/admin/products");
       router.refresh();
@@ -157,10 +195,18 @@ export default function NewProductPage() {
     }
   };
 
+  if (initialLoading) {
+    return <div style={{ padding: "2rem" }}>Загрузка данных товара...</div>;
+  }
+
+  if (error && !initialData) {
+    return <div style={{ padding: "2rem", color: "red" }}>{error}</div>;
+  }
+
   return (
     <div>
       <div className="admin-header">
-        <h1>Добавить товар</h1>
+        <h1>Редактировать товар</h1>
       </div>
 
       <form className="admin-form" onSubmit={handleSubmit}>
@@ -168,7 +214,7 @@ export default function NewProductPage() {
 
         <div className="form-group">
           <label>Название</label>
-          <input type="text" name="name" required />
+          <input type="text" name="name" defaultValue={initialData?.name} required />
         </div>
 
         <div className="form-group">
@@ -231,12 +277,12 @@ export default function NewProductPage() {
 
         <div className="form-group">
           <label>Описание</label>
-          <textarea name="description" />
+          <textarea name="description" defaultValue={initialData?.description || ""} />
         </div>
 
         <div className="form-group">
           <label>Характеристики (через запятую, например: Хлопок 100%, Плотность 300г/м2)</label>
-          <textarea name="materials" />
+          <textarea name="materials" defaultValue={initialData?.materials?.join(", ") || ""} />
         </div>
 
         <div className="form-group">
@@ -247,7 +293,6 @@ export default function NewProductPage() {
             onDragLeave={onDragLeave}
             onDrop={onDrop}
             onClick={(e) => {
-              // Prevent opening file dialog when clicking remove button
               if ((e.target as HTMLElement).tagName !== 'BUTTON') {
                 fileInputRef.current?.click();
               }
@@ -262,16 +307,25 @@ export default function NewProductPage() {
                 if (e.target.files && e.target.files.length > 0) {
                   handleFiles(e.target.files);
                 }
-                // clear value to allow same file re-selection
                 e.target.value = '';
               }} 
               style={{ display: 'none' }}
             />
-            {previewUrls.length > 0 ? (
+            {existingImages.length > 0 || previewUrls.length > 0 ? (
               <div className="preview-gallery" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', padding: '10px' }}>
+                {existingImages.map((url, idx) => (
+                  <div key={`exist-${idx}`} style={{ position: 'relative', width: '80px', height: '80px' }}>
+                    <img src={url} alt={`Existing ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                    <button 
+                      type="button" 
+                      onClick={(e) => removeExistingImage(idx, e)}
+                      style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'red', color: 'white', borderRadius: '50%', width: '20px', height: '20px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}
+                    >✕</button>
+                  </div>
+                ))}
                 {previewUrls.map((url, idx) => (
-                  <div key={idx} style={{ position: 'relative', width: '80px', height: '80px' }}>
-                    <img src={url} alt={`Preview ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                  <div key={`new-${idx}`} style={{ position: 'relative', width: '80px', height: '80px' }}>
+                    <img src={url} alt={`Preview ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px', border: '2px solid var(--accent-color)' }} />
                     <button 
                       type="button" 
                       onClick={(e) => removeFile(idx, e)}
@@ -279,7 +333,7 @@ export default function NewProductPage() {
                     >✕</button>
                   </div>
                 ))}
-                {previewUrls.length < 8 && (
+                {(existingImages.length + previewUrls.length) < 8 && (
                    <div style={{ width: '80px', height: '80px', border: '2px dashed var(--border-color)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>+</div>
                 )}
               </div>
@@ -299,7 +353,7 @@ export default function NewProductPage() {
         {session?.user?.role === "SUPERADMIN" && (
           <div className="form-group">
             <label>Университет (для СуперАдмина)</label>
-            <select name="universityId">
+            <select name="universityId" defaultValue={initialData?.universityId || ""}>
               <option value="">Без университета (Глобальный)</option>
               <option value="mgu">МГУ</option>
               <option value="mifi">МИФИ</option>
@@ -314,15 +368,13 @@ export default function NewProductPage() {
         )}
 
         <div className="form-group">
-          <label>Остаток на складе</label>
-          <input type="number" name="stockCount" defaultValue="10" min="0" />
+          <label>Количество на складе</label>
+          <input type="number" name="stockCount" defaultValue={initialData?.stockCount || 0} required min="0" />
         </div>
 
-        <div className="form-actions">
-          <button type="submit" className="admin-button" disabled={loading}>
-            {loading ? "Сохранение..." : "Сохранить"}
-          </button>
-        </div>
+        <button type="submit" className="admin-button" style={{ width: '100%', marginTop: '20px' }} disabled={loading}>
+          {loading ? "Сохранение..." : "Сохранить изменения"}
+        </button>
       </form>
     </div>
   );

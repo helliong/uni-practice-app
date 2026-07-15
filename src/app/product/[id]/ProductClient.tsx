@@ -57,6 +57,8 @@ export default function ProductClient({ product }: { product: Product }) {
     "desc" | "specs" | "delivery" | "reviews"
   >("desc");
   const [activeImageIdx, setActiveImageIdx] = useState(0);
+  
+  const imagesList = product.images && product.images.length > 0 ? product.images : [product.imageUrl];
 
   const [recommendations, setRecommendations] = useState<Product[]>([]);
 
@@ -128,24 +130,21 @@ export default function ProductClient({ product }: { product: Product }) {
           {/* Left Side: Images */}
           <div className="product-gallery">
             <div className="thumbnails">
-              {[0, 1, 2, 3].map((idx) => (
+              {imagesList.map((imgUrl, idx) => (
                 <div
                   key={idx}
                   className={`thumb ${activeImageIdx === idx ? "active" : ""}`}
                   onClick={() => setActiveImageIdx(idx)}
+                  style={{ position: 'relative', overflow: 'hidden' }}
                 >
-                  <div
-                    className="img-placeholder"
-                    style={{
-                      backgroundImage: "var(--product-image-gradient)",
-                    }}
-                  />
+                  <Image src={imgUrl} alt={`${product.name} thumbnail ${idx + 1}`} fill style={{ objectFit: 'cover' }} sizes="80px" />
                 </div>
               ))}
             </div>
-            <div className="main-image-container">
-              <div className="badge">NEW</div>
-              <button className="favorite-btn" onClick={handleFavoriteToggle}>
+            <div className="main-image-container" style={{ position: 'relative', overflow: 'hidden', minHeight: '400px' }}>
+              <Image src={imagesList[activeImageIdx]} alt={product.name} fill style={{ objectFit: 'cover' }} priority sizes="(max-width: 768px) 100vw, 50vw" />
+              <div className="badge" style={{ zIndex: 10 }}>NEW</div>
+              <button className="favorite-btn" onClick={handleFavoriteToggle} style={{ zIndex: 10 }}>
                 <FiHeart
                   style={{
                     fill: favorite ? "#ff4757" : "transparent",
@@ -153,23 +152,24 @@ export default function ProductClient({ product }: { product: Product }) {
                   }}
                 />
               </button>
-              <div className="main-image-placeholder"></div>
-              <div className="image-nav">
-                <button
-                  onClick={() =>
-                    setActiveImageIdx((prev) => Math.max(0, prev - 1))
-                  }
-                >
-                  <FiChevronLeft />
-                </button>
-                <button
-                  onClick={() =>
-                    setActiveImageIdx((prev) => Math.min(3, prev + 1))
-                  }
-                >
-                  <FiChevronRight />
-                </button>
-              </div>
+              {imagesList.length > 1 && (
+                <div className="image-nav" style={{ zIndex: 10 }}>
+                  <button
+                    onClick={() =>
+                      setActiveImageIdx((prev) => Math.max(0, prev - 1))
+                    }
+                  >
+                    <FiChevronLeft />
+                  </button>
+                  <button
+                    onClick={() =>
+                      setActiveImageIdx((prev) => Math.min(imagesList.length - 1, prev + 1))
+                    }
+                  >
+                    <FiChevronRight />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 

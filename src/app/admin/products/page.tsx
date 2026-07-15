@@ -76,6 +76,13 @@ export default function AdminProductsPage() {
                   <div className={`status ${product.isPublished ? 'active' : 'inactive'}`}>
                     {product.isPublished ? 'Опубликован' : 'Черновик'}
                   </div>
+                  <Link 
+                    href={`/admin/products/${product.id}/edit`}
+                    className="admin-button"
+                    style={{ fontSize: '12px', padding: '6px 12px' }}
+                  >
+                    Редактировать
+                  </Link>
                   <button 
                     onClick={() => setProductToDelete(product.id)}
                     className="btn-delete"

@@ -11,6 +11,7 @@ export interface Product {
   inStock?: boolean;
   universityId?: string | null;
   oldPrice?: number | null;
+  images?: string[];
 }
 
 export interface CartItem {

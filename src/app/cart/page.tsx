@@ -52,7 +52,7 @@ export default function CartPage() {
   }, []);
 
   const recommendations = publicProducts
-    .filter((product) => !items.some((item) => item.product.id === product.id) && !isFavorite(product.id))
+    .filter((product) => !items.some((item) => item.product.id === product.id))
     .slice(0, 5);
   const shouldShowInlineRecommendations = totalItems < 5;
   const sidebarRecommendations = shouldShowInlineRecommendations ? [] : recommendations.slice(0, 2);
