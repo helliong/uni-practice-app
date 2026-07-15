@@ -9,6 +9,7 @@ datasource db {
 
 enum Role {
   STUDENT
+  EXPLORER
   UNIVERSITY_ADMIN
   SUPERADMIN
 }
@@ -19,7 +20,7 @@ model User {
   password  String
   name      String?
   phone     String?
-  role      Role     @default(STUDENT)
+  role      Role     @default(EXPLORER)
   
   universityId String?
   university   University? @relation(fields: [universityId], references: [id])

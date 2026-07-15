@@ -130,7 +130,9 @@ export default function ProfilePage() {
     : profileData?.name || profileData?.email?.split("@")[0] || "Без имени";
   const displayEmail = isProfileLoading ? "" : profileData?.email;
   const displayPhone = isProfileLoading ? "Загрузка..." : profileData?.phone || "Телефон не указан";
-  const displayRole = profileData?.role === "student" ? "Студент" : (profileData?.role || "Пользователь");
+  const displayRole = profileData?.role === "STUDENT" ? "Студент" : 
+                      profileData?.role === "EXPLORER" ? "Исследователь" : 
+                      (profileData?.role || "Пользователь");
 
   const checkScroll = () => {
     if (scrollRef.current) {
