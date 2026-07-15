@@ -11,23 +11,35 @@ export default function Footer() {
   return (
     <footer className="site-footer">
       <div className="footer-container">
-        
         <div className="footer-top">
           {/* Колонка 1: Бренд */}
           <div className="footer-col brand-col">
             <div className="footer-logo">
               <Link href="/">
-                <img src="/campus-code-logo.svg" alt="Campus & Code" height="60" />
+                <img
+                  src="/campus-code-logo.svg"
+                  alt="Campus & Code"
+                  height="60"
+                />
               </Link>
             </div>
             <p className="brand-desc">
-              Магазин IT и университетской атрибутики для тех, кто учится, кодит и создает будущее.
+              Магазин IT и университетской атрибутики для тех, кто учится, кодит
+              и создает будущее.
             </p>
             <div className="social-links">
-              <a href="#" aria-label="VK"><FaVk /></a>
-              <a href="#" aria-label="Telegram"><FaTelegramPlane /></a>
-              <a href="#" aria-label="Instagram"><FaInstagram /></a>
-              <a href="#" aria-label="YouTube"><FaYoutube /></a>
+              <a href="#" aria-label="VK">
+                <FaVk />
+              </a>
+              <a href="#" aria-label="Telegram">
+                <FaTelegramPlane />
+              </a>
+              <a href="#" aria-label="Instagram">
+                <FaInstagram />
+              </a>
+              <a href="#" aria-label="YouTube">
+                <FaYoutube />
+              </a>
             </div>
           </div>
 
@@ -35,7 +47,7 @@ export default function Footer() {
           <div className="footer-col">
             <h4>Покупателям</h4>
             <nav className="footer-nav">
-              <Link href="/">Каталог</Link>
+              <Link href="/catalog">Каталог</Link>
               <Link href="/">Доставка и оплата</Link>
               <Link href="/">Возврат и обмен</Link>
               <Link href="/">FAQ</Link>
@@ -107,7 +119,6 @@ export default function Footer() {
             <Link href="/">Пользовательское соглашение</Link>
           </div>
         </div>
-
       </div>
     </footer>
   );

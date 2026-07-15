@@ -1,0 +1,879 @@
+.universities-page {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 2rem;
+  color: var(--text-main);
+
+  .universities-breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+
+    a {
+      color: inherit;
+      text-decoration: none;
+
+      &:hover {
+        color: var(--text-main);
+      }
+    }
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    span {
+      color: var(--text-main);
+    }
+  }
+
+  .universities-hero {
+    margin-bottom: 1.8rem;
+
+    h1 {
+      margin: 0 0 0.4rem;
+      font-family: var(--font-heading), Georgia, serif;
+      font-size: clamp(2.1rem, 4vw, 3.5rem);
+      font-weight: 400;
+      line-height: 1;
+    }
+
+    p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+  }
+
+  .universities-tabs {
+    display: grid;
+    grid-template-columns: repeat(9, minmax(112px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    button {
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
+        var(--bg-card);
+      color: var(--text-main);
+      text-align: left;
+      transition:
+        border-color 0.2s,
+        background-color 0.2s,
+        transform 0.2s;
+
+      &:hover,
+      &.active {
+        border-color: rgba(82, 132, 204, 0.8);
+        background:
+          linear-gradient(145deg, rgba(59, 111, 184, 0.2), rgba(255, 255, 255, 0.025)),
+          var(--bg-card);
+      }
+
+      &:hover {
+        transform: translateY(-1px);
+      }
+
+      .tab-mark {
+        width: 34px;
+        height: 34px;
+        flex: 0 0 34px;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 50%;
+        font-family: var(--font-heading), Georgia, serif;
+        font-size: 1.25rem;
+        line-height: 1;
+      }
+
+      span:not(.tab-mark) {
+        min-width: 0;
+      }
+
+      strong,
+      small {
+        display: block;
+      }
+
+      strong {
+        overflow: hidden;
+        font-size: 0.84rem;
+        font-weight: 600;
+        line-height: 1.2;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      small {
+        margin-top: 0.15rem;
+        color: var(--text-secondary);
+        font-size: 0.76rem;
+      }
+    }
+  }
+
+  .universities-layout {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 2rem;
+    align-items: start;
+  }
+
+  .universities-sidebar {
+    .filter-group {
+      margin-bottom: 2rem;
+
+      h3 {
+        font-size: 1rem;
+        font-weight: 500;
+        margin: 0 0 1rem 0;
+        padding-bottom: 0.5rem;
+      }
+
+      .category-filter-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+
+        li {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 0.9rem;
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: color 0.2s;
+
+          &:hover, &.active {
+            color: var(--text-main);
+          }
+
+          &.active {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.25rem 0.5rem;
+            margin: -0.25rem -0.5rem;
+            border-radius: 4px;
+          }
+        }
+      }
+
+      .university-search {
+        height: 36px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        padding: 0 0.7rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: transparent;
+        color: var(--text-secondary);
+
+        svg {
+          width: 15px;
+          height: 15px;
+        }
+
+        input {
+          width: 100%;
+          border: 0;
+          outline: 0;
+          background: transparent;
+          color: var(--text-main);
+          font-size: 0.78rem;
+
+          &::placeholder {
+            color: var(--text-secondary);
+          }
+        }
+      }
+
+      .price-slider-placeholder {
+        position: relative;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+
+        .range-input {
+          position: absolute;
+          width: 100%;
+          pointer-events: none;
+          appearance: none;
+          height: 100%;
+          background: transparent;
+          z-index: 3;
+          outline: none;
+          margin: 0;
+
+          &::-webkit-slider-thumb {
+            pointer-events: all;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid var(--catalog-accent);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            cursor: pointer;
+          }
+          
+          &::-moz-range-thumb {
+            pointer-events: all;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid var(--catalog-accent);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            cursor: pointer;
+          }
+        }
+
+        .slider-track {
+          position: absolute;
+          width: 100%;
+          height: 4px;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 2px;
+          z-index: 1;
+
+          .slider-range {
+            position: absolute;
+            height: 100%;
+            background: var(--catalog-accent);
+            border-radius: 2px;
+            z-index: 2;
+          }
+        }
+      }
+
+      .price-inputs {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+
+        input {
+          width: 100%;
+          background: transparent;
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          padding: 0.5rem;
+          color: var(--text-main);
+          font-size: 0.85rem;
+          text-align: center;
+        }
+      }
+
+      .color-picker {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+
+        .color-swatch {
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          border: 1px solid var(--border);
+          cursor: pointer;
+          padding: 0;
+          transition: all 0.2s;
+
+          &.active {
+            border-color: var(--bg-main);
+            border-width: 2px;
+            transform: scale(1.15);
+            box-shadow: 0 0 0 2px var(--catalog-accent);
+          }
+        }
+      }
+
+      .checkbox-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .custom-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        transition: color 0.2s;
+
+        &:hover {
+          color: var(--text-main);
+        }
+
+        input {
+          display: none;
+
+          &:checked + .checkmark {
+            background: var(--catalog-accent);
+            border-color: var(--catalog-accent);
+            color: var(--bg-main);
+            svg { display: block; }
+          }
+        }
+
+        .checkmark {
+          width: 18px;
+          height: 18px;
+          border: 1px solid var(--border);
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: transparent;
+          transition: all 0.2s;
+
+          svg {
+            width: 12px;
+            height: 12px;
+            display: none;
+          }
+        }
+
+        &.flex-between {
+          justify-content: space-between;
+          
+          .checkbox-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+          }
+
+          .count-label {
+            font-size: 0.8rem;
+          }
+        }
+      }
+    }
+
+    .filter-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1rem;
+
+      .apply-filters-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--text-main);
+        color: var(--bg-main);
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.1s;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.9);
+        }
+        
+        &:active {
+          transform: scale(0.98);
+        }
+      }
+
+      .reset-filters-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background: transparent;
+        color: var(--text-secondary);
+        border: none;
+        padding: 0.5rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: color 0.2s;
+
+        &:hover {
+          color: var(--text-main);
+        }
+      }
+    }
+  }
+
+  .universities-content {
+    min-width: 0;
+  }
+
+  .universities-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+
+    .sort-button {
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text-main);
+      font-size: 0.82rem;
+
+      span {
+        color: var(--text-secondary);
+      }
+
+      svg {
+        margin-left: 0.6rem;
+      }
+    }
+
+    .view-buttons {
+      display: flex;
+      gap: 0.35rem;
+
+      button {
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        background: transparent;
+        color: var(--text-secondary);
+
+        &:hover,
+        &.active {
+          background: rgba(255, 255, 255, 0.055);
+          color: var(--text-main);
+        }
+      }
+    }
+  }
+
+  .universities-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+
+  .university-product-card {
+    position: relative;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background:
+      radial-gradient(circle at 50% 8%, rgba(255, 255, 255, 0.055), transparent 36%),
+      var(--bg-card);
+    transition:
+      border-color 0.2s,
+      transform 0.2s,
+      box-shadow 0.2s;
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.32);
+      box-shadow: 0 18px 34px rgba(0, 0, 0, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .favorite-button {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 2;
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      background: transparent;
+      color: var(--text-secondary);
+
+      svg {
+        width: 20px;
+        height: 20px;
+        stroke-width: 1.8;
+      }
+
+      &:hover,
+      &.active {
+        color: #ff5d72;
+      }
+
+      &.active svg {
+        fill: currentColor;
+      }
+    }
+
+    .university-badge {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      z-index: 2;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 50%;
+      background: rgba(4, 10, 15, 0.42);
+      color: rgba(255, 255, 255, 0.82);
+      font-family: var(--font-heading), Georgia, serif;
+      font-size: 1rem;
+      backdrop-filter: blur(6px);
+    }
+
+    .product-image-link {
+      display: block;
+      aspect-ratio: 1 / 1;
+      padding: 1rem;
+    }
+
+    .product-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.34));
+      transition: transform 0.25s;
+    }
+
+    &:hover .product-image {
+      transform: scale(1.025);
+    }
+
+    .product-meta {
+      padding: 0 1rem;
+
+      .product-kind {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-bottom: 0.35rem;
+        color: var(--text-secondary);
+        font-size: 0.72rem;
+
+        .kind-icon {
+          width: 13px;
+          height: 13px;
+        }
+      }
+
+      h3 {
+        margin: 0 0 0.45rem;
+        font-size: 0.95rem;
+        line-height: 1.25;
+      }
+
+      p {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 700;
+      }
+    }
+
+    .product-actions {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 0.8rem;
+      margin-top: auto;
+      padding: 1rem;
+
+      .size-list {
+        display: flex;
+        gap: 0.35rem;
+        min-width: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+
+        &::-webkit-scrollbar {
+          display: none;
+        }
+
+        button {
+          min-width: 27px;
+          height: 25px;
+          border: 1px solid var(--border);
+          border-radius: 4px;
+          background: transparent;
+          color: var(--text-secondary);
+          font-size: 0.72rem;
+
+          &:hover,
+          &.active {
+            border-color: rgba(255, 255, 255, 0.86);
+            color: var(--text-main);
+          }
+        }
+      }
+
+      .cart-button {
+        width: 35px;
+        height: 35px;
+        flex: 0 0 35px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: transparent;
+        color: var(--text-secondary);
+
+        &:hover {
+          border-color: rgba(255, 255, 255, 0.72);
+          color: var(--text-main);
+        }
+      }
+
+      .quantity-controls {
+        width: 92px;
+        height: 35px;
+        flex: 0 0 92px;
+        display: grid;
+        grid-template-columns: 28px 1fr 28px;
+        align-items: center;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: transparent;
+
+        button {
+          height: 100%;
+          border: 0;
+          background: transparent;
+          color: var(--text-main);
+          font-size: 1rem;
+          line-height: 1;
+          transition: background-color 0.2s;
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.06);
+          }
+        }
+
+        span {
+          color: var(--text-main);
+          font-size: 0.9rem;
+          font-weight: 600;
+          text-align: center;
+        }
+      }
+    }
+  }
+
+  .university-collections {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+    margin-top: 1.25rem;
+  }
+
+  .collection-card {
+    position: relative;
+    min-height: 190px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-main);
+    text-decoration: none;
+    isolation: isolate;
+
+    img {
+      object-fit: cover;
+      opacity: 0.74;
+      filter: saturate(0.8) contrast(1.08);
+      transition: transform 0.3s;
+    }
+
+    &:hover img {
+      transform: scale(1.04);
+    }
+
+    &.mgu {
+      background: #10231f;
+    }
+
+    &.mifi,
+    &.vshe {
+      background: #0d1b2d;
+    }
+
+    &.spbgu {
+      background: #2b1512;
+    }
+
+    .collection-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background:
+        linear-gradient(90deg, rgba(4, 10, 15, 0.92), rgba(4, 10, 15, 0.48) 52%, rgba(4, 10, 15, 0.2)),
+        linear-gradient(0deg, rgba(4, 10, 15, 0.3), transparent);
+    }
+
+    .collection-copy,
+    .collection-mark {
+      position: absolute;
+      z-index: 2;
+    }
+
+    .collection-copy {
+      left: 1.4rem;
+      right: 5rem;
+      bottom: 1.25rem;
+
+      strong,
+      small,
+      em {
+        display: block;
+      }
+
+      strong {
+        margin-bottom: 0.6rem;
+        font-family: var(--font-heading), Georgia, serif;
+        font-size: 1.65rem;
+        font-weight: 400;
+      }
+
+      small {
+        max-width: 250px;
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 0.8rem;
+        line-height: 1.35;
+      }
+
+      em {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-top: 1.15rem;
+        color: #ffffff;
+        font-size: 0.78rem;
+        font-style: normal;
+        font-weight: 600;
+      }
+    }
+
+    .collection-mark {
+      top: 1rem;
+      right: 1.2rem;
+      color: rgba(255, 255, 255, 0.72);
+      font-family: var(--font-heading), Georgia, serif;
+      font-size: 3.2rem;
+      line-height: 1;
+    }
+  }
+}
+
+@media (max-width: 1180px) {
+  .universities-page {
+    .universities-tabs {
+      grid-template-columns: repeat(9, 128px);
+    }
+
+    .universities-layout {
+      grid-template-columns: 210px minmax(0, 1fr);
+      gap: 1.3rem;
+    }
+
+    .universities-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .universities-page {
+    padding: 1rem;
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+
+    .universities-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .universities-sidebar {
+      display: none;
+    }
+
+    .universities-toolbar {
+      justify-content: space-between;
+    }
+
+    .universities-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.9rem;
+    }
+
+    .university-collections {
+      grid-template-columns: 1fr;
+      gap: 0.9rem;
+    }
+  }
+}
+
+@media (max-width: 560px) {
+  .universities-page {
+    .universities-tabs {
+      grid-template-columns: repeat(9, 118px);
+      gap: 0.55rem;
+
+      button {
+        min-height: 64px;
+        padding: 0.65rem;
+      }
+    }
+
+    .universities-toolbar {
+      align-items: stretch;
+      flex-direction: column;
+
+      .sort-button {
+        justify-content: space-between;
+      }
+    }
+
+    .universities-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .university-product-card {
+      min-height: 360px;
+    }
+
+    .collection-card {
+      min-height: 170px;
+    }
+  }
+}

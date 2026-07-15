@@ -19,6 +19,7 @@ export default function Header() {
   const [isProfilePopupOpen, setIsProfilePopupOpen] = useState(false);
   const isHomeActive = pathname === "/";
   const isCatalogActive = pathname?.startsWith('/catalog') || pathname?.startsWith('/product');
+  const isUniversitiesActive = pathname?.startsWith('/universities');
   const isFavoritesActive = pathname?.startsWith('/favorites');
   const isCartActive = pathname?.startsWith('/cart') || pathname?.startsWith('/checkout');
   const isProfileActive = isProfilePopupOpen || pathname?.startsWith('/login') || pathname?.startsWith('/register');
@@ -52,7 +53,7 @@ export default function Header() {
             </svg>
             <span className="nav-label">Каталог</span>
           </Link>
-          <Link href="/" className="nav-link desktop-link">
+          <Link href="/universities" className={`nav-link desktop-link ${isUniversitiesActive ? 'active' : ''}`}>
             Университеты
           </Link>
           <Link href="/" className="nav-link desktop-link">
