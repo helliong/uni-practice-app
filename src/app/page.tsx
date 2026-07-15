@@ -6,6 +6,8 @@ import Link from "next/link";
 import { FiFeather, FiGift, FiTruck } from "react-icons/fi";
 import { LuLeaf, LuPenTool, LuTruck, LuStar } from "react-icons/lu";
 
+export const dynamic = "force-dynamic";
+
 const categories = [
   {
     name: "Худи",
