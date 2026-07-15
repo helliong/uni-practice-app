@@ -188,30 +188,15 @@ export default function ProductClient({ product }: { product: Product }) {
 
             <div className="product-meta">
               <div className="rating">
-                <FiStar className="star filled" style={{ fill: "currentColor" }} />
-                <FiStar className="star filled" style={{ fill: "currentColor" }} />
-                <FiStar className="star filled" style={{ fill: "currentColor" }} />
-                <FiStar className="star filled" style={{ fill: "currentColor" }} />
-                <FiStar
-                  className="star half"
-                  style={{ fill: "url(#halfGradient)" }}
-                />
-                <svg width="0" height="0">
-                  <defs>
-                    <linearGradient id="halfGradient">
-                      <stop offset="50%" stopColor="var(--text-main)" />
-                      <stop
-                        offset="50%"
-                        stopColor="transparent"
-                        stopOpacity="1"
-                      />
-                    </linearGradient>
-                  </defs>
-                </svg>
-                <span className="score">4.9</span>
-                <span className="reviews">(128 отзывов)</span>
+                <FiStar className="star" />
+                <FiStar className="star" />
+                <FiStar className="star" />
+                <FiStar className="star" />
+                <FiStar className="star" />
+                <span className="score">0.0</span>
+                <span className="reviews">(0 отзывов)</span>
               </div>
-              <span className="art">Арт. CC-HOOD-001</span>
+              <span className="art">Арт. {product.sku || 'Не указан'}</span>
             </div>
 
             <div className="price-block">
@@ -351,7 +336,7 @@ export default function ProductClient({ product }: { product: Product }) {
               className={`tab ${activeTab === "reviews" ? "active" : ""}`}
               onClick={() => setActiveTab("reviews")}
             >
-              Отзывы (128)
+              Отзывы (0)
             </button>
           </div>
           <div className="tab-content">
@@ -363,14 +348,13 @@ export default function ProductClient({ product }: { product: Product }) {
             )}
             {activeTab === "specs" && (
               <ul>
-                <li>
-                  Материал:{" "}
-                  {product.materials?.join(", ") || "80% хлопок, 20% полиэстер"}
-                </li>
-                <li>Плотность: 320 г/м²</li>
-                <li>Принт: стойкий, не трескается и не выцветает</li>
-                <li>Карман-кенгуру, капюшон на шнурках</li>
-                <li>Унисекс модель</li>
+                {product.materials && product.materials.length > 0 ? (
+                  product.materials.map((spec, idx) => (
+                    <li key={idx}>{spec}</li>
+                  ))
+                ) : (
+                  <li>Характеристики не указаны</li>
+                )}
               </ul>
             )}
             {activeTab === "delivery" && (
