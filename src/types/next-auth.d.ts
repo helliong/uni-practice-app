@@ -8,4 +8,18 @@ declare module "next-auth" {
       universityId?: string | null;
     } & DefaultSession["user"];
   }
+
+  interface User {
+    id: string;
+    role?: string;
+    universityId?: string | null;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id?: string;
+    role?: string;
+    universityId?: string | null;
+  }
 }
