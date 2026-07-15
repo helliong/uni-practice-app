@@ -12,6 +12,7 @@ export interface Product {
   universityId?: string | null;
   oldPrice?: number | null;
   images?: string[];
+  sku?: string | null;
 }
 
 export interface CartItem {
