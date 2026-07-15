@@ -80,6 +80,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true }, { status: 200 });
     }
 
+    if (action === 'get') {
+      const finalCartItems = await prisma.cartItem.findMany({
+        where: { userId: session.user.id },
+        include: { product: true }
+      });
+      return NextResponse.json({ cartItems: finalCartItems }, { status: 200 });
+    }
+
     return NextResponse.json({ message: "Invalid action" }, { status: 400 });
   } catch (error) {
     console.error("Cart sync error:", error);

@@ -20,11 +20,15 @@ type CartState = {
   addToCart: (product: Product, quantity: number, size?: string, color?: string) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number, size?: string, color?: string) => void;
+  toggleItemSelection: (productId: string, size?: string, color?: string) => void;
+  toggleAllSelection: (isSelected: boolean) => void;
   clearCart: () => void;
 };
 
 function getCartTotal(items: CartItem[]) {
-  return items.reduce((total, item) => total + item.product.price * item.quantity, 0);
+  return items
+    .filter((item) => item.isSelected !== false)
+    .reduce((total, item) => total + item.product.price * item.quantity, 0);
 }
 
 function serializeCart(items: CartItem[]): CartSyncItem[] {
@@ -85,7 +89,7 @@ export const useCartStore = create<CartState>()(
         ? currentItems.map((item, index) =>
             index === existingItemIndex ? { ...item, quantity: item.quantity + quantity } : item,
           )
-        : [...currentItems, { product, quantity, selectedSize: size, selectedColor: color }];
+        : [...currentItems, { product, quantity, selectedSize: size, selectedColor: color, isSelected: true }];
 
     set(buildCartState(nextItems));
     if (get().isDbSyncEnabled) syncCartToDb(nextItems);
@@ -111,6 +115,20 @@ export const useCartStore = create<CartState>()(
 
     set(buildCartState(nextItems));
     if (get().isDbSyncEnabled) syncCartToDb(nextItems);
+  },
+
+  toggleItemSelection: (productId, size, color) => {
+    const nextItems = get().items.map((item) =>
+      item.product.id === productId && item.selectedSize === size && item.selectedColor === color
+        ? { ...item, isSelected: item.isSelected === false ? true : false }
+        : item
+    );
+    set(buildCartState(nextItems));
+  },
+
+  toggleAllSelection: (isSelected) => {
+    const nextItems = get().items.map((item) => ({ ...item, isSelected }));
+    set(buildCartState(nextItems));
   },
 
   clearCart: () => {

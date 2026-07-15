@@ -124,7 +124,8 @@ function PaymentIcon({ icon }: { icon: PaymentOption["icon"] }) {
 }
 
 export default function CheckoutPage() {
-  const { items, cartTotal } = useCart();
+  const { items: allItems, cartTotal } = useCart();
+  const items = allItems.filter((item) => item.isSelected !== false);
   const { status } = useSession();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileLoadState, setProfileLoadState] = useState<"idle" | "loaded" | "error">("idle");

@@ -37,12 +37,15 @@ function getItemsWord(count: number) {
 }
 
 export default function CartPage() {
-  const { items, addToCart, updateQuantity, clearCart, cartTotal } = useCart();
+  const { items, addToCart, updateQuantity, clearCart, cartTotal, toggleItemSelection, toggleAllSelection } = useCart();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const emptyRecommendationsRef = useRef<HTMLDivElement>(null);
   const [canScrollRecommendationsLeft, setCanScrollRecommendationsLeft] = useState(false);
   const [canScrollRecommendationsRight, setCanScrollRecommendationsRight] = useState(false);
+  const selectedItems = items.filter((item) => item.isSelected !== false);
+  const totalSelectedItems = selectedItems.reduce((total, item) => total + item.quantity, 0);
   const totalItems = items.reduce((total, item) => total + item.quantity, 0);
+  const isAllSelected = items.length > 0 && items.every((item) => item.isSelected !== false);
   const deliveryPrice = cartTotal >= 3000 || cartTotal === 0 ? 0 : 300;
   const totalToPay = cartTotal + deliveryPrice;
   const [publicProducts, setPublicProducts] = useState<Product[]>([]);
@@ -170,13 +173,24 @@ export default function CartPage() {
       <header className="cart-header">
         <h1>Корзина</h1>
         <p>
-          {totalItems} {getItemsWord(totalItems)} на сумму {formatPrice(cartTotal)}
+          Выбрано: {totalSelectedItems} {getItemsWord(totalSelectedItems)} на сумму {formatPrice(cartTotal)}
         </p>
       </header>
 
       <div className="cart-layout">
         <div className="cart-main-column">
           <section className="cart-items-card" aria-label="Товары в корзине">
+            <div className="cart-select-all">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  onChange={(e) => toggleAllSelection(e.target.checked)}
+                />
+                <span className="checkbox-custom"></span>
+                <span className="checkbox-text">Выбрать все</span>
+              </label>
+            </div>
             <div className="cart-table-head">
               <span>Товар</span>
               <span>Цена</span>
@@ -192,6 +206,14 @@ export default function CartPage() {
 
               return (
                 <article className="cart-row" key={rowKey}>
+                  <label className="item-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={item.isSelected !== false}
+                      onChange={() => toggleItemSelection(item.product.id, item.selectedSize, item.selectedColor)}
+                    />
+                    <span className="checkbox-custom"></span>
+                  </label>
                   <Link href={productUrl} className="cart-product-image">
                     <Image
                       src={item.product.imageUrl}
@@ -278,7 +300,7 @@ export default function CartPage() {
             <h2>Итого</h2>
             <div className="summary-lines">
               <div>
-                <span>{totalItems} {getItemsWord(totalItems)}</span>
+                <span>{totalSelectedItems} {getItemsWord(totalSelectedItems)}</span>
                 <strong>{formatPrice(cartTotal)}</strong>
               </div>
               <div>
@@ -294,8 +316,12 @@ export default function CartPage() {
               <span>К оплате</span>
               <strong>{formatPrice(totalToPay)}</strong>
             </div>
-            <Link className="checkout-btn" href="/checkout">Оформить заказ</Link>
-            <button className="quick-buy-btn" type="button">Купить в пару кликов</button>
+            {selectedItems.length > 0 ? (
+              <Link className="checkout-btn" href="/checkout">Оформить заказ</Link>
+            ) : (
+              <button className="checkout-btn disabled" disabled>Выберите товары</button>
+            )}
+            <button className="quick-buy-btn" type="button" disabled={selectedItems.length === 0}>Купить в пару кликов</button>
           </section>
 
           <section className="benefits-card" aria-label="Преимущества">

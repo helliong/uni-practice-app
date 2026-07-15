@@ -13,13 +13,22 @@ type DbCartItem = {
   product: Product;
 };
 
-function mapDbCartItems(cartItems: DbCartItem[]): CartItem[] {
-  return cartItems.map((dbItem) => ({
-    product: dbItem.product,
-    quantity: dbItem.quantity,
-    selectedSize: dbItem.selectedSize || undefined,
-    selectedColor: dbItem.selectedColor || undefined,
-  }));
+function mapDbCartItems(cartItems: DbCartItem[], localItems: CartItem[]): CartItem[] {
+  return cartItems.map((dbItem) => {
+    const localItem = localItems.find(
+      (item) =>
+        item.product.id === dbItem.productId &&
+        item.selectedSize === (dbItem.selectedSize || undefined) &&
+        item.selectedColor === (dbItem.selectedColor || undefined)
+    );
+    return {
+      product: dbItem.product,
+      quantity: dbItem.quantity,
+      selectedSize: dbItem.selectedSize || undefined,
+      selectedColor: dbItem.selectedColor || undefined,
+      isSelected: localItem && localItem.isSelected !== undefined ? localItem.isSelected : true,
+    };
+  });
 }
 
 function CartSync() {
@@ -38,18 +47,20 @@ function CartSync() {
     isInitialSyncDone.current = true;
     const currentItems = useCartStore.getState().items;
 
+    const isAlreadySynced = useCartStore.getState().isDbSyncEnabled;
+
     fetch("/api/user/cart/sync", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        action: "merge",
-        localCart: getSerializedCartItems(currentItems),
+        action: isAlreadySynced ? "get" : "merge",
+        localCart: isAlreadySynced ? [] : getSerializedCartItems(currentItems),
       }),
     })
       .then((response) => response.json())
       .then((data: { cartItems?: DbCartItem[] }) => {
         if (data.cartItems) {
-          useCartStore.getState().setItems(mapDbCartItems(data.cartItems));
+          useCartStore.getState().setItems(mapDbCartItems(data.cartItems, currentItems));
         }
         useCartStore.getState().setDbSyncEnabled(true);
       })
