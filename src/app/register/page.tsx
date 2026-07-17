@@ -106,7 +106,10 @@ export default function RegisterPage() {
       <div className="login-card">
         <div className="login-card-left register-left">
           <div className="merch-image-wrapper">
-            <img src="/auth-mockup-transparent.webp?v=9" alt="Campus & Code Merch" />
+            <img
+              src="/auth-mockup-transparent.webp?v=9"
+              alt="Campus & Code Merch"
+            />
           </div>
 
           <div className="register-benefits">
@@ -131,9 +134,9 @@ export default function RegisterPage() {
               </li>
             </ul>
 
-            <div className="login-link-bottom">
+            {/* <div className="login-link-bottom">
               Уже есть аккаунт? <Link href="/login">Войти</Link>
-            </div>
+            </div> */}
           </div>
         </div>
 
