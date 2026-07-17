@@ -17,6 +17,8 @@ import {
 } from "react-icons/fi";
 import { useCart } from "@/context/CartContext";
 import { getStudentDiscountAmount, STUDENT_DISCOUNT_PERCENT } from "@/lib/pricing";
+import { getProductImagesForColor } from "@/lib/productVariants";
+import { CartItem } from "@/types";
 import "./page.scss";
 
 type UserProfile = {
@@ -103,6 +105,10 @@ const paymentOptions: PaymentOption[] = [
 
 function formatPrice(price: number) {
   return `${price.toLocaleString("ru-RU")} ₽`;
+}
+
+function getCartItemImage(item: CartItem) {
+  return getProductImagesForColor(item.product, item.selectedColor)[0] || item.product.imageUrl;
 }
 
 function getItemsWord(count: number) {
@@ -385,11 +391,12 @@ export default function CheckoutPage() {
             <div className="order-list">
               {items.map((item) => {
                 const rowKey = `${item.product.id}-${item.selectedSize || "none"}-${item.selectedColor || "none"}`;
+                const productImage = getCartItemImage(item);
 
                 return (
                   <article className="order-item" key={rowKey}>
                     <div className="order-item-image">
-                      <Image src={item.product.imageUrl} alt={item.product.name} width={76} height={76} unoptimized />
+                      <Image src={productImage} alt={item.product.name} width={76} height={76} unoptimized />
                     </div>
                     <div className="order-item-info">
                       <h3>{item.product.name}</h3>

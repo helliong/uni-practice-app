@@ -12,6 +12,7 @@ import ProductCard from "@/components/ProductCard";
 import { Product } from "@/types";
 import { getPublicProducts } from "@/actions/products";
 import { getStudentDiscountAmount, STUDENT_DISCOUNT_PERCENT } from "@/lib/pricing";
+import { getProductImagesForColor } from "@/lib/productVariants";
 import "./page.scss";
 
 const colorNames: Record<string, string> = {
@@ -31,6 +32,10 @@ function formatPrice(price: number) {
 
 function getProductUrl(product: Product) {
   return `/product/${product.id}-${generateSlug(product.name)}`;
+}
+
+function getCartItemImage(item: { product: Product; selectedColor?: string }) {
+  return getProductImagesForColor(item.product, item.selectedColor)[0] || item.product.imageUrl;
 }
 
 function getItemsWord(count: number) {
@@ -278,6 +283,7 @@ export default function CartPage() {
                 const rowKey = `${item.product.id}-${item.selectedSize || "none"}-${item.selectedColor || "none"}`;
                 const productUrl = getProductUrl(item.product);
                 const rowTotal = item.product.price * item.quantity;
+                const productImage = getCartItemImage(item);
 
                 return (
                   <article className="cart-row" key={rowKey}>
@@ -297,7 +303,7 @@ export default function CartPage() {
                     </label>
                     <Link href={productUrl} className="cart-product-image">
                       <Image
-                        src={item.product.imageUrl}
+                        src={productImage}
                         alt={item.product.name}
                         width={132}
                         height={132}
