@@ -8,6 +8,7 @@ import { Product } from '../types';
 import { generateSlug } from '../lib/utils';
 import { useCart } from '../context/CartContext';
 import { useFavorites } from '../context/FavoritesContext';
+import { getProductImagesForColor, hasVariantStock } from '../lib/productVariants';
 import './ProductCard.scss';
 
 import './ProductCard.scss';
@@ -24,12 +25,23 @@ const categoryNames: Record<string, string> = {
   other: 'Разное'
 };
 
+const colorHexMap: Record<string, string> = {
+  black: "#1A1A1A",
+  blue: "#1C2331",
+  white: "#F5F5F5",
+  gray: "#A9A9A9",
+  beige: "#EADDD7",
+  red: "#E63946",
+  green: "#2A9D8F",
+};
+
 export default function ProductCard({ product }: { product: Product }) {
   const { items, addToCart, updateQuantity } = useCart();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   
   const [isMounted, setIsMounted] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | undefined>(product.availableSizes?.[0]);
+  const [selectedColor, setSelectedColor] = useState<string | undefined>(product.availableColors?.[0]);
 
   // Fix hydration mismatch: wait until mounted to read from localStorage-backed contexts
   useEffect(() => {
@@ -37,28 +49,32 @@ export default function ProductCard({ product }: { product: Product }) {
   }, []);
 
   const favorite = isMounted ? isFavorite(product.id) : false;
-  const defaultColor = product.availableColors?.[0];
+  const productImages = getProductImagesForColor(product, selectedColor);
+  const cardImage = productImages[0] || product.imageUrl;
+  const isSelectedVariantInStock = hasVariantStock(product, selectedColor, selectedSize);
 
   const cartItem = items.find(item => 
     item.product.id === product.id && 
     item.selectedSize === selectedSize && 
-    item.selectedColor === defaultColor
+    item.selectedColor === selectedColor
   );
   const quantity = isMounted && cartItem ? cartItem.quantity : 0;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    addToCart(product, 1, selectedSize, defaultColor);
+    if (!isSelectedVariantInStock) return;
+    addToCart(product, 1, selectedSize, selectedColor);
   };
 
   const handleIncrement = (e: React.MouseEvent) => {
     e.preventDefault();
-    updateQuantity(product.id, quantity + 1, selectedSize, defaultColor);
+    if (!isSelectedVariantInStock) return;
+    updateQuantity(product.id, quantity + 1, selectedSize, selectedColor);
   };
 
   const handleDecrement = (e: React.MouseEvent) => {
     e.preventDefault();
-    updateQuantity(product.id, quantity - 1, selectedSize, defaultColor);
+    updateQuantity(product.id, quantity - 1, selectedSize, selectedColor);
   };
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
@@ -77,7 +93,7 @@ export default function ProductCard({ product }: { product: Product }) {
     <div className="product-card">
       <Link href={productUrl} className="image-wrapper">
         <Image 
-          src={product.imageUrl} 
+          src={cardImage} 
           alt={product.name} 
           width={300} 
           height={300}
@@ -102,22 +118,45 @@ export default function ProductCard({ product }: { product: Product }) {
         <p className="category-name">{categoryNames[product.category] || 'Товар'}</p>
         <h3><Link href={productUrl}>{product.name}</Link></h3>
         <p className="price">{product.price.toLocaleString('ru-RU')} ₽</p>
+
+        {product.availableColors && product.availableColors.length > 0 && (
+          <div className="color-selector">
+            {product.availableColors.map((color) => (
+              <button
+                key={color}
+                type="button"
+                className={`color-btn ${selectedColor === color ? "active" : ""}`}
+                style={{ backgroundColor: colorHexMap[color] || "#111" }}
+                onClick={(event) => {
+                  event.preventDefault();
+                  setSelectedColor(color);
+                }}
+                aria-label={`Выбрать цвет ${color}`}
+              />
+            ))}
+          </div>
+        )}
         
         {product.availableSizes && product.availableSizes.length > 0 ? (
           <div className="card-actions compact-mode">
             <div className="size-selector">
-              {product.availableSizes.map(size => (
-                <button 
-                  key={size}
-                  className={`size-btn ${selectedSize === size ? 'active' : ''}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setSelectedSize(size);
-                  }}
-                >
-                  {size}
-                </button>
-              ))}
+              {product.availableSizes.map(size => {
+                const isSizeAvailable = hasVariantStock(product, selectedColor, size);
+
+                return (
+                  <button 
+                    key={size}
+                    className={`size-btn ${selectedSize === size ? 'active' : ''}`}
+                    disabled={!isSizeAvailable}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setSelectedSize(size);
+                    }}
+                  >
+                    {size}
+                  </button>
+                );
+              })}
             </div>
 
             {quantity > 0 ? (
@@ -127,7 +166,7 @@ export default function ProductCard({ product }: { product: Product }) {
                 <button className="qty-btn" onClick={handleIncrement}>+</button>
               </div>
             ) : (
-              <button className="cart-icon-btn" onClick={handleAddToCart} aria-label="В корзину">
+              <button className="cart-icon-btn" onClick={handleAddToCart} aria-label="В корзину" disabled={!isSelectedVariantInStock}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="9" cy="21" r="1"></circle>
                   <circle cx="20" cy="21" r="1"></circle>
@@ -145,7 +184,7 @@ export default function ProductCard({ product }: { product: Product }) {
                 <button className="qty-btn" onClick={handleIncrement}>+</button>
               </div>
             ) : (
-              <button className="view-btn" onClick={handleAddToCart}>
+              <button className="view-btn" onClick={handleAddToCart} disabled={!isSelectedVariantInStock}>
                 <span>В корзину</span>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="9" cy="21" r="1"></circle>

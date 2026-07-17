@@ -78,6 +78,7 @@
 
   .product-main {
     display: flex;
+    align-items: flex-start;
     gap: 3rem;
     margin-bottom: 4rem;
 
@@ -124,8 +125,15 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        min-height: 500px;
+        width: 100%;
+        min-height: 0;
+        max-height: 620px;
+        aspect-ratio: 1 / 1;
         overflow: hidden;
+
+        .main-product-image {
+          object-fit: contain;
+        }
 
         .badge {
           position: absolute;
@@ -345,6 +353,11 @@
               color: var(--text-main);
               background-color: var(--product-soft-overlay);
             }
+            &:disabled {
+              cursor: not-allowed;
+              opacity: 0.35;
+              text-decoration: line-through;
+            }
             &:hover:not(.active) {
               border-color: var(--product-hover-border);
               color: var(--text-main);
@@ -376,6 +389,10 @@
         .add-to-cart-btn {
           background-color: var(--accent-blue);
           color: var(--primary-text);
+          &:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+          }
           &:hover {
             background-color: var(--accent-blue-hover);
           }

@@ -63,6 +63,7 @@ model Product {
   oldPrice        Int?
   imageUrl        String
   images          String[] @default([])
+  imagesByColor   Json     @default("{}")
   
   category        String
   badge           String?  
@@ -73,6 +74,7 @@ model Product {
   tags            String[]
   
   stockCount      Int      @default(0)
+  variants        Json     @default("[]")
   inStock         Boolean  @default(true)
   
   views           Int      @default(0)
@@ -125,4 +127,3 @@ model VerificationRequest {
   user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   university   University         @relation(fields: [universityId], references: [id], onDelete: Cascade)
 }
-

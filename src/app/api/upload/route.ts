@@ -1,9 +1,26 @@
 import { NextResponse } from 'next/server';
-import { writeFile } from 'fs/promises';
-import { join } from 'path';
+import { mkdir, writeFile } from 'fs/promises';
+import { extname, join } from 'path';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { validateProductImageUpload } from "@/lib/serverImageValidation";
+
+const allowedUploadRoles = new Set(["SUPERADMIN", "UNIVERSITY_ADMIN"]);
+
+function getSafeFileName(fileName: string) {
+  const extension = extname(fileName).toLowerCase();
+
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${extension}`;
+}
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user || !allowedUploadRoles.has(session.user.role || "")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
 
@@ -13,17 +30,18 @@ export async function POST(request: Request) {
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+    const validationError = validateProductImageUpload(file, buffer);
+
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
+    }
 
     // Save to public/uploads
     // Using a simple timestamp + random string to avoid name collisions
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}-${file.name}`;
+    const fileName = getSafeFileName(file.name);
     const uploadDir = join(process.cwd(), 'public', 'uploads');
     
-    // Ensure dir exists
-    const fs = require('fs');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
+    await mkdir(uploadDir, { recursive: true });
 
     const path = join(uploadDir, fileName);
     await writeFile(path, buffer);

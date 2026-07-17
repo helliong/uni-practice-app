@@ -3,6 +3,34 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from '@/lib/prisma';
 
+type ProductVariantPayload = {
+  color?: string;
+  size?: string;
+  stock?: number | string;
+  sku?: string;
+};
+
+function normalizeVariants(variants: ProductVariantPayload[] | undefined) {
+  if (!Array.isArray(variants)) return [];
+
+  return variants
+    .map((variant) => ({
+      color: variant.color || undefined,
+      size: variant.size || undefined,
+      stock: Math.max(0, Number(variant.stock) || 0),
+      sku: variant.sku || undefined,
+    }))
+    .filter((variant) => variant.color || variant.size);
+}
+
+function getTotalStock(variants: ReturnType<typeof normalizeVariants>, fallback: unknown) {
+  if (variants.length > 0) {
+    return variants.reduce((total, variant) => total + variant.stock, 0);
+  }
+
+  return Number(fallback) || 0;
+}
+
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await getServerSession(authOptions);
@@ -61,6 +89,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       : data.universityId || existingProduct.universityId;
 
     const slug = data.slug || existingProduct.slug;
+    const variants = normalizeVariants(data.variants);
+    const stockCount = getTotalStock(variants, data.stockCount);
 
     const updatedProduct = await prisma.product.update({
       where: { id },
@@ -73,12 +103,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
         imageUrl: data.imageUrl,
         images: data.images || (data.imageUrl ? [data.imageUrl] : []),
+        imagesByColor: data.imagesByColor || {},
         category: data.category,
         availableSizes: data.availableSizes || [],
         availableColors: data.availableColors || [],
         materials: data.materials || [],
-        stockCount: Number(data.stockCount) || 0,
-        inStock: data.inStock !== undefined ? data.inStock : true,
+        stockCount,
+        variants,
+        inStock: data.inStock !== undefined ? data.inStock : stockCount > 0,
         universityId: universityIdToUse as string | null,
         isPublished: data.isPublished !== undefined ? data.isPublished : true,
       }

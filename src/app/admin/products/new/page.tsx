@@ -3,6 +3,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { getProductImageValidationResult } from "@/lib/clientImageValidation";
+import {
+  PRODUCT_IMAGE_ACCEPT,
+  PRODUCT_IMAGE_MAX_FILES,
+  PRODUCT_IMAGE_RULES_TEXT,
+} from "@/lib/imageUploadRules";
+import { variantKey } from "@/lib/productVariants";
+
+type ImagesByColor = Record<string, string[]>;
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -10,7 +19,11 @@ export default function NewProductPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  const [imageErrors, setImageErrors] = useState<string[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [colorFiles, setColorFiles] = useState<Record<string, File[]>>({});
+  const [colorPreviewUrls, setColorPreviewUrls] = useState<Record<string, string[]>>({});
+  const [stockByVariant, setStockByVariant] = useState<Record<string, string>>({});
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [priceStr, setPriceStr] = useState("");
@@ -44,6 +57,9 @@ export default function NewProductPage() {
     );
   };
 
+  const getColorLabel = (colorId: string) =>
+    colorsList.find((color) => color.id === colorId)?.label || colorId;
+
   useEffect(() => {
     if (session?.user?.role === "SUPERADMIN") {
       fetch("/api/admin/universities") // we don't have this, but wait, we have Server Action getPublicUniversities!
@@ -69,39 +85,99 @@ export default function NewProductPage() {
     setOldPriceStr(Number(rawValue).toLocaleString("ru-RU"));
   };
 
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-
-  const handleFiles = (newFiles: FileList | File[]) => {
+  const handleFiles = async (newFiles: FileList | File[]) => {
     const fileArray = Array.from(newFiles);
-    
-    const validFiles = fileArray.filter(file => {
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        alert(`Файл ${file.name} имеет неподдерживаемый формат. Доступны: JPG, PNG, WEBP.`);
-        return false;
-      }
-      if (file.size > MAX_FILE_SIZE) {
-        alert(`Файл ${file.name} слишком большой. Максимальный размер: 5 МБ.`);
-        return false;
-      }
-      return true;
-    });
+    const validationResult = await getProductImageValidationResult(fileArray);
+    const nextImageErrors = [...validationResult.errors];
+    const validFiles = validationResult.validFiles;
 
-    const totalFiles = [...files, ...validFiles].slice(0, 8);
+    if (files.length + validFiles.length > PRODUCT_IMAGE_MAX_FILES) {
+      nextImageErrors.push(`Можно загрузить не больше ${PRODUCT_IMAGE_MAX_FILES} изображений.`);
+    }
+
+    const totalFiles = [...files, ...validFiles].slice(0, PRODUCT_IMAGE_MAX_FILES);
+    setImageErrors(nextImageErrors);
     setFiles(totalFiles);
     
     previewUrls.forEach(url => URL.revokeObjectURL(url));
     setPreviewUrls(totalFiles.map(f => URL.createObjectURL(f)));
   };
 
+  const handleColorFiles = async (colorId: string, newFiles: FileList | File[]) => {
+    const fileArray = Array.from(newFiles);
+    const validationResult = await getProductImageValidationResult(fileArray);
+    const previousFiles = colorFiles[colorId] || [];
+    const nextImageErrors = [...validationResult.errors];
+
+    if (previousFiles.length + validationResult.validFiles.length > PRODUCT_IMAGE_MAX_FILES) {
+      nextImageErrors.push(`Для цвета ${getColorLabel(colorId)} можно загрузить не больше ${PRODUCT_IMAGE_MAX_FILES} изображений.`);
+    }
+
+    const nextFiles = [...previousFiles, ...validationResult.validFiles].slice(0, PRODUCT_IMAGE_MAX_FILES);
+    setImageErrors(nextImageErrors);
+    setColorFiles((prev) => ({ ...prev, [colorId]: nextFiles }));
+
+    colorPreviewUrls[colorId]?.forEach((url) => URL.revokeObjectURL(url));
+    setColorPreviewUrls((prev) => ({
+      ...prev,
+      [colorId]: nextFiles.map((file) => URL.createObjectURL(file)),
+    }));
+  };
+
   const removeFile = (idx: number, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const updatedFiles = files.filter((_, i) => i !== idx);
+    setImageErrors([]);
     setFiles(updatedFiles);
     
     previewUrls.forEach(url => URL.revokeObjectURL(url));
     setPreviewUrls(updatedFiles.map(f => URL.createObjectURL(f)));
+  };
+
+  const removeColorFile = (colorId: string, idx: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const updatedFiles = (colorFiles[colorId] || []).filter((_, i) => i !== idx);
+    setImageErrors([]);
+    setColorFiles((prev) => ({ ...prev, [colorId]: updatedFiles }));
+
+    colorPreviewUrls[colorId]?.forEach((url) => URL.revokeObjectURL(url));
+    setColorPreviewUrls((prev) => ({
+      ...prev,
+      [colorId]: updatedFiles.map((file) => URL.createObjectURL(file)),
+    }));
+  };
+
+  const uploadFile = async (file: File) => {
+    const uploadData = new FormData();
+    uploadData.append("file", file);
+    const uploadRes = await fetch("/api/upload", {
+      method: "POST",
+      body: uploadData,
+    });
+    const uploadResult = await uploadRes.json();
+
+    if (!uploadRes.ok) {
+      throw new Error(uploadResult.error || "Ошибка загрузки изображения");
+    }
+
+    return uploadResult.url as string;
+  };
+
+  const buildVariants = (baseSku: string) => {
+    if (selectedColors.length === 0) return [];
+
+    const sizes = category === "hoodie" || category === "tshirt" ? selectedSizes : [undefined];
+
+    return selectedColors.flatMap((color) =>
+      sizes.map((size) => ({
+        color,
+        size,
+        stock: Number(stockByVariant[variantKey(color, size)] || 0),
+        sku: `${baseSku}-${color}${size ? `-${size}` : ""}`.replace(/\s+/g, "-"),
+      })),
+    );
   };
 
   const onDragOver = (e: React.DragEvent) => {
@@ -124,8 +200,21 @@ export default function NewProductPage() {
 
     const formData = new FormData(e.currentTarget);
 
-    if (files.length === 0) {
+    const usesColorImages = selectedColors.length > 0;
+    const missingColorImages = selectedColors.filter((color) => (colorFiles[color] || []).length === 0);
+
+    if (!usesColorImages && files.length === 0) {
       setError("Пожалуйста, загрузите хотя бы одно изображение.");
+      setLoading(false);
+      return;
+    }
+
+    if (usesColorImages && missingColorImages.length > 0) {
+      setImageErrors(
+        missingColorImages.map(
+          (color) => `Загрузите хотя бы одно фото для цвета ${getColorLabel(color)}.`,
+        ),
+      );
       setLoading(false);
       return;
     }
@@ -137,27 +226,32 @@ export default function NewProductPage() {
     }
 
     try {
-      // 1. Upload images
       const uploadedUrls: string[] = [];
-      for (const f of files) {
-        const uploadData = new FormData();
-        uploadData.append("file", f);
-        const uploadRes = await fetch("/api/upload", {
-          method: "POST",
-          body: uploadData,
-        });
+      const imagesByColor: ImagesByColor = {};
 
-        if (!uploadRes.ok) throw new Error("Ошибка загрузки изображения");
-        const uploadResult = await uploadRes.json();
-        uploadedUrls.push(uploadResult.url);
+      if (usesColorImages) {
+        for (const color of selectedColors) {
+          imagesByColor[color] = [];
+          for (const file of colorFiles[color] || []) {
+            const url = await uploadFile(file);
+            imagesByColor[color].push(url);
+            uploadedUrls.push(url);
+          }
+        }
+      } else {
+        for (const file of files) {
+          uploadedUrls.push(await uploadFile(file));
+        }
       }
       
       const imageUrl = uploadedUrls[0];
+      const baseSku = formData.get("sku")?.toString().trim().replace(/\s+/g, "-") || "";
+      const variants = buildVariants(baseSku);
 
       // 2. Create product
       const productData = {
         name: formData.get("name"),
-        sku: formData.get("sku"),
+        sku: baseSku,
         price: priceStr.replace(/\D/g, ""), // clean up price
         oldPrice: oldPriceStr ? oldPriceStr.replace(/\D/g, "") : null,
         category: formData.get("category"),
@@ -165,6 +259,8 @@ export default function NewProductPage() {
         materials: formData.get("materials") ? formData.get("materials")?.toString().split(",").map(s => s.trim()).filter(Boolean) : [],
         imageUrl: imageUrl,
         images: uploadedUrls,
+        imagesByColor,
+        variants,
         stockCount: formData.get("stockCount"),
         universityId: formData.get("universityId") || null,
         availableSizes: (category === "hoodie" || category === "tshirt") ? selectedSizes : [],
@@ -295,6 +391,79 @@ export default function NewProductPage() {
           </div>
         </div>
 
+        {selectedColors.length > 0 && (
+          <div className="form-group">
+            <div className="variant-stock-header">
+              <label>Остатки по вариантам</label>
+              <button
+                type="button"
+                onClick={() => {
+                  const sizes = category === "hoodie" || category === "tshirt" ? selectedSizes : [undefined];
+                  const nextStock = { ...stockByVariant };
+
+                  selectedColors.forEach((color) => {
+                    sizes.forEach((size) => {
+                      nextStock[variantKey(color, size)] = "";
+                    });
+                  });
+
+                  setStockByVariant(nextStock);
+                }}
+              >
+                Очистить
+              </button>
+            </div>
+            <div
+              className="variant-stock-matrix"
+              style={{
+                "--stock-columns": category === "hoodie" || category === "tshirt" ? Math.max(selectedSizes.length, 1) : 1,
+              } as React.CSSProperties}
+            >
+              <div className="variant-stock-row variant-stock-row-head">
+                <span>Цвет</span>
+                {(category === "hoodie" || category === "tshirt" ? selectedSizes : ["Остаток"]).map((size) => (
+                  <span key={size}>{size}</span>
+                ))}
+              </div>
+              {selectedColors.map((color) => {
+                const sizes = category === "hoodie" || category === "tshirt" ? selectedSizes : [undefined];
+
+                return (
+                  <div className="variant-stock-row" key={color}>
+                    <div className="variant-stock-color">
+                      <span
+                        className="color-dot"
+                        style={{ background: colorsList.find((item) => item.id === color)?.hex || "#111" }}
+                      />
+                      <strong>{getColorLabel(color)}</strong>
+                    </div>
+                    {sizes.map((size) => {
+                      const key = variantKey(color, size);
+
+                      return (
+                        <input
+                          key={key}
+                          type="number"
+                          min="0"
+                          value={stockByVariant[key] || ""}
+                          onChange={(event) =>
+                            setStockByVariant((prev) => ({
+                              ...prev,
+                              [key]: event.target.value === "0" ? "" : event.target.value,
+                            }))
+                          }
+                          placeholder="0"
+                          aria-label={`Остаток ${getColorLabel(color)}${size ? ` ${size}` : ""}`}
+                        />
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="form-group">
           <label>Описание</label>
           <textarea name="description" />
@@ -305,11 +474,81 @@ export default function NewProductPage() {
           <textarea name="materials" />
         </div>
 
+        {selectedColors.length > 0 && (
+          <div className="form-group">
+            <label>
+              Фото по цветам
+              <span style={{ display: "block", fontSize: "0.85em", color: "var(--text-muted)", fontWeight: "normal", marginTop: "4px" }}>
+                {PRODUCT_IMAGE_RULES_TEXT} Для каждого выбранного цвета нужно хотя бы одно фото.
+              </span>
+            </label>
+            <div className="color-image-groups">
+              {selectedColors.map((color) => (
+                <div className="color-image-group" key={color}>
+                  <div className="color-image-title">
+                    <span
+                      className="color-dot"
+                      style={{ background: colorsList.find((item) => item.id === color)?.hex || "#111" }}
+                    />
+                    <strong>{getColorLabel(color)}</strong>
+                  </div>
+                  <div
+                    className="drag-drop-zone compact"
+                    onClick={(event) => {
+                      if ((event.target as HTMLElement).tagName !== "BUTTON") {
+                        document.getElementById(`color-file-${color}`)?.click();
+                      }
+                    }}
+                  >
+                    <input
+                      id={`color-file-${color}`}
+                      type="file"
+                      accept={PRODUCT_IMAGE_ACCEPT}
+                      multiple
+                      onChange={(event) => {
+                        if (event.target.files && event.target.files.length > 0) {
+                          handleColorFiles(color, event.target.files);
+                        }
+                        event.target.value = "";
+                      }}
+                      style={{ display: "none" }}
+                    />
+                    {(colorPreviewUrls[color] || []).length > 0 ? (
+                      <div className="preview-gallery" style={{ display: "flex", gap: "10px", flexWrap: "wrap", padding: "10px" }}>
+                        {(colorPreviewUrls[color] || []).map((url, idx) => (
+                          <div key={url} style={{ position: "relative", width: "80px", height: "80px" }}>
+                            <img src={url} alt={`${getColorLabel(color)} ${idx + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} />
+                            <button
+                              type="button"
+                              onClick={(event) => removeColorFile(color, idx, event)}
+                              style={{ position: "absolute", top: "-5px", right: "-5px", background: "red", color: "white", borderRadius: "50%", width: "20px", height: "20px", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px" }}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                        {(colorPreviewUrls[color] || []).length < PRODUCT_IMAGE_MAX_FILES && (
+                          <div style={{ width: "80px", height: "80px", border: "2px dashed var(--border-color)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}>+</div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="drag-drop-placeholder">
+                        <span>Нажмите, чтобы добавить фото для цвета {getColorLabel(color)}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {selectedColors.length === 0 && (
         <div className="form-group">
           <label>
             Изображения (до 8 штук)
             <span style={{ display: 'block', fontSize: '0.85em', color: 'var(--text-muted)', fontWeight: 'normal', marginTop: '4px' }}>
-              Рекомендации: формат JPG, PNG или WEBP, до 5 МБ на файл. Идеальные пропорции 3:4 или 1:1, светлый фон. Первое фото станет обложкой.
+              {PRODUCT_IMAGE_RULES_TEXT} Первое фото станет обложкой.
             </span>
           </label>
           <div 
@@ -326,7 +565,7 @@ export default function NewProductPage() {
           >
             <input 
               type="file" 
-              accept="image/*" 
+              accept={PRODUCT_IMAGE_ACCEPT}
               multiple
               ref={fileInputRef}
               onChange={(e) => {
@@ -365,7 +604,21 @@ export default function NewProductPage() {
               </div>
             )}
           </div>
+          {imageErrors.length > 0 && (
+            <div className="upload-errors" role="alert">
+              <div className="upload-errors-icon" aria-hidden="true">!</div>
+              <div>
+                <strong>Не удалось добавить часть изображений</strong>
+                <ul>
+                  {imageErrors.map((imageError) => (
+                    <li key={imageError}>{imageError}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
         </div>
+        )}
 
         {session?.user?.role === "SUPERADMIN" && (
           <div className="form-group">
@@ -384,10 +637,12 @@ export default function NewProductPage() {
           </div>
         )}
 
-        <div className="form-group">
-          <label>Остаток на складе</label>
-          <input type="number" name="stockCount" defaultValue="10" min="0" />
-        </div>
+        {selectedColors.length === 0 && (
+          <div className="form-group">
+            <label>Остаток на складе</label>
+            <input type="number" name="stockCount" defaultValue="10" min="0" />
+          </div>
+        )}
 
         <div className="form-actions">
           <button type="submit" className="admin-button" disabled={loading}>

@@ -12,7 +12,16 @@ export interface Product {
   universityId?: string | null;
   oldPrice?: number | null;
   images?: string[];
+  imagesByColor?: Record<string, string[]>;
+  variants?: ProductVariant[];
   sku?: string | null;
+}
+
+export interface ProductVariant {
+  color?: string;
+  size?: string;
+  stock: number;
+  sku?: string;
 }
 
 export interface CartItem {

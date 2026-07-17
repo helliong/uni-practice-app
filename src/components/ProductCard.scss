@@ -103,6 +103,27 @@
       color: var(--text-main);
     }
 
+    .color-selector {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin-top: 0.75rem;
+
+      .color-btn {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 2px solid var(--border);
+        cursor: pointer;
+        transition: border-color 0.2s, transform 0.2s;
+
+        &.active {
+          border-color: var(--text-main);
+          transform: scale(1.08);
+        }
+      }
+    }
+
     .card-actions {
       display: flex;
       margin-top: auto;
@@ -152,6 +173,12 @@
               color: var(--text-main);
               background: rgba(255, 255, 255, 0.05);
             }
+
+            &:disabled {
+              cursor: not-allowed;
+              opacity: 0.35;
+              text-decoration: line-through;
+            }
           }
         }
 
@@ -174,6 +201,11 @@
             border-color: var(--text-main);
             color: var(--text-main);
             background: rgba(255, 255, 255, 0.05);
+          }
+
+          &:disabled {
+            cursor: not-allowed;
+            opacity: 0.45;
           }
 
           svg {
@@ -251,6 +283,11 @@
             svg {
               opacity: 1;
             }
+          }
+
+          &:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
           }
         }
 

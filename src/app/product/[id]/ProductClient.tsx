@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { generateSlug } from "../../../lib/utils";
@@ -26,6 +26,11 @@ import {
 import { useCart } from "../../../context/CartContext";
 import { useFavorites } from "../../../context/FavoritesContext";
 import { Product } from "../../../types";
+import {
+  getAvailableSizesForColor,
+  getProductImagesForColor,
+  hasVariantStock,
+} from "@/lib/productVariants";
 
 export default function ProductClient({ product }: { product: Product }) {
   const { items, addToCart, updateQuantity } = useCart();
@@ -60,7 +65,15 @@ export default function ProductClient({ product }: { product: Product }) {
   >("desc");
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   
-  const imagesList = product.images && product.images.length > 0 ? product.images : [product.imageUrl];
+  const imagesList = useMemo(
+    () => getProductImagesForColor(product, colorState),
+    [product, colorState],
+  );
+  const availableSizesForColor = useMemo(
+    () => getAvailableSizesForColor(product, colorState),
+    [product, colorState],
+  );
+  const isSelectedVariantInStock = hasVariantStock(product, colorState, sizeState || undefined);
 
   const [recommendations, setRecommendations] = useState<Product[]>([]);
 
@@ -69,6 +82,14 @@ export default function ProductClient({ product }: { product: Product }) {
       setRecommendations(data.filter(p => p.id !== product.id && !items.some(i => i.product.id === p.id) && !isFavorite(p.id)).slice(0, 4));
     });
   }, [items, isFavorite, product.id]);
+
+  useEffect(() => {
+    setActiveImageIdx(0);
+
+    if (availableSizesForColor.length > 0 && !availableSizesForColor.includes(sizeState)) {
+      setSizeState(availableSizesForColor[0]);
+    }
+  }, [colorState, availableSizesForColor, sizeState]);
 
   const cartItem = items.find(
     (item) =>
@@ -79,6 +100,7 @@ export default function ProductClient({ product }: { product: Product }) {
   const quantity = cartItem ? cartItem.quantity : 0;
 
   const handleIncrement = () => {
+    if (!isSelectedVariantInStock) return;
     updateQuantity(product.id, quantity + 1, sizeState, colorState);
   };
 
@@ -87,6 +109,8 @@ export default function ProductClient({ product }: { product: Product }) {
   };
 
   const handleAddToCart = () => {
+    if (!isSelectedVariantInStock) return;
+
     if (quantity > 0) {
       updateQuantity(product.id, quantity + 1, sizeState, colorState);
     } else {
@@ -143,8 +167,15 @@ export default function ProductClient({ product }: { product: Product }) {
                 </div>
               ))}
             </div>
-            <div className="main-image-container" style={{ position: 'relative', overflow: 'hidden', minHeight: '400px' }}>
-              <Image src={imagesList[activeImageIdx]} alt={product.name} fill style={{ objectFit: 'cover' }} priority sizes="(max-width: 768px) 100vw, 50vw" />
+            <div className="main-image-container">
+              <Image
+                src={imagesList[activeImageIdx]}
+                alt={product.name}
+                fill
+                className="main-product-image"
+                priority
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
               <div className="badge" style={{ zIndex: 10 }}>NEW</div>
               <button className="favorite-btn" onClick={handleFavoriteToggle} style={{ zIndex: 10 }}>
                 <FiHeart
@@ -231,15 +262,20 @@ export default function ProductClient({ product }: { product: Product }) {
                   </button>
                 </div>
                 <div className="sizes">
-                  {sizesToRender.map((size) => (
-                    <button
-                      key={size}
-                      className={`size-btn ${sizeState === size ? "active" : ""}`}
-                      onClick={() => setSizeState(size)}
-                    >
-                      {size}
-                    </button>
-                  ))}
+                  {sizesToRender.map((size) => {
+                    const isSizeAvailable = hasVariantStock(product, colorState, size);
+
+                    return (
+                      <button
+                        key={size}
+                        className={`size-btn ${sizeState === size ? "active" : ""}`}
+                        disabled={!isSizeAvailable}
+                        onClick={() => setSizeState(size)}
+                      >
+                        {size}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -252,8 +288,8 @@ export default function ProductClient({ product }: { product: Product }) {
                   <button className="qty-btn" onClick={handleIncrement}>+</button>
                 </div>
               ) : (
-                <button className="add-to-cart-btn" onClick={handleAddToCart}>
-                  <FiShoppingCart /> Добавить в корзину
+                <button className="add-to-cart-btn" onClick={handleAddToCart} disabled={!isSelectedVariantInStock}>
+                  <FiShoppingCart /> {isSelectedVariantInStock ? "Добавить в корзину" : "Нет в наличии"}
                 </button>
               )}
               <button className="quick-buy-btn">
