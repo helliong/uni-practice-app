@@ -30,7 +30,9 @@
       color: var(--text-secondary);
       text-decoration: none;
       border-radius: 8px;
-      transition: background 0.2s, color 0.2s;
+      transition:
+        background 0.2s,
+        color 0.2s;
 
       &:hover {
         background: var(--bg-section);
@@ -66,7 +68,9 @@
   border-radius: 8px;
   text-decoration: none;
   font-weight: 500;
-  transition: opacity 0.2s, background 0.2s;
+  transition:
+    opacity 0.2s,
+    background 0.2s;
 
   &:hover {
     background: var(--primary-hover);
@@ -121,7 +125,7 @@
         border-color: rgba(211, 47, 47, 0.3);
       }
     }
-    
+
     .btn-delete {
       background: rgba(211, 47, 47, 0.1);
       color: #ef5350;
@@ -226,7 +230,8 @@
   justify-content: center;
   min-height: 200px;
 
-  &:hover, &.dragging {
+  &:hover,
+  &.dragging {
     border-color: var(--primary);
     background: var(--bg-section);
   }
@@ -255,7 +260,10 @@
 
 .delete-modal-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
   display: flex;
@@ -313,7 +321,7 @@
     .btn-confirm-delete {
       background: #e53935;
       color: white;
-      
+
       &:hover {
         background: #c62828;
       }

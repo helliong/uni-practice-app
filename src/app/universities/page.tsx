@@ -127,7 +127,9 @@ export default function UniversitiesPage() {
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
-      const matchesUniversity = appliedFilters.universities.length === 0 || (product.universityId && appliedFilters.universities.includes(product.universityId));
+      if (!product.universityId) return false;
+
+      const matchesUniversity = appliedFilters.universities.length === 0 || appliedFilters.universities.includes(product.universityId);
       const matchesCategory = appliedFilters.category === "all" || product.category === appliedFilters.category;
       const matchesPrice = product.price >= appliedFilters.priceRange[0] && product.price <= appliedFilters.priceRange[1];
       const matchesColor =
@@ -140,7 +142,7 @@ export default function UniversitiesPage() {
 
       return matchesUniversity && matchesCategory && matchesPrice && matchesColor && matchesSize && matchesMaterial && matchesStock;
     });
-  }, [appliedFilters]);
+  }, [appliedFilters, products]);
 
   return (
     <main className="universities-page">

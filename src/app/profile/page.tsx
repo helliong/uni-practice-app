@@ -357,7 +357,9 @@ export default function ProfilePage() {
           <div className="balance-divider"></div>
           <div className="balance-item">
             <span className="balance-label">Скидка</span>
-            <span className="balance-value">0%</span>
+            <span className="balance-value">
+              {profileData?.role === "STUDENT" ? "10%" : "0%"}
+            </span>
             <Link href="/profile/bonuses/rules" className="balance-link">
               Как это работает &rarr;
             </Link>

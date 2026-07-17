@@ -16,12 +16,14 @@ import {
   FiTruck,
 } from "react-icons/fi";
 import { useCart } from "@/context/CartContext";
+import { getStudentDiscountAmount, STUDENT_DISCOUNT_PERCENT } from "@/lib/pricing";
 import "./page.scss";
 
 type UserProfile = {
   name?: string | null;
   email?: string | null;
   phone?: string | null;
+  role?: string | null;
 };
 
 type DeliveryOption = {
@@ -126,7 +128,7 @@ function PaymentIcon({ icon }: { icon: PaymentOption["icon"] }) {
 export default function CheckoutPage() {
   const { items: allItems, cartTotal } = useCart();
   const items = allItems.filter((item) => item.isSelected !== false);
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileLoadState, setProfileLoadState] = useState<"idle" | "loaded" | "error">("idle");
   const [selectedDeliveryId, setSelectedDeliveryId] = useState<DeliveryOption["id"]>("courier");
@@ -141,7 +143,8 @@ export default function CheckoutPage() {
     () => deliveryOptions.find((option) => option.id === selectedDeliveryId) ?? deliveryOptions[0],
     [selectedDeliveryId],
   );
-  const discount = 0;
+  const isStudent = session?.user?.role === "STUDENT" || profile?.role === "STUDENT";
+  const discount = isStudent ? getStudentDiscountAmount(cartTotal) : 0;
   const totalToPay = cartTotal + selectedDelivery.price - discount;
   const isProfileLoading = status === "authenticated" && profileLoadState === "idle";
 
@@ -379,7 +382,9 @@ export default function CheckoutPage() {
                 <strong>{formatPrice(selectedDelivery.price)}</strong>
               </div>
               <div>
-                <span>Скидка</span>
+                <span>
+                  Скидка {isStudent ? `(Студент ${STUDENT_DISCOUNT_PERCENT}%)` : ""}
+                </span>
                 <strong>- {formatPrice(discount)}</strong>
               </div>
             </div>
