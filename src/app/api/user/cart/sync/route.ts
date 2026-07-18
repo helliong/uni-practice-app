@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { filterValidCartItems, mergeCartItems } from "@/lib/cartSync";
-import { prisma } from "@/lib/prisma";
+import { filterValidCartItems, mergeCartItems } from "@/lib/cart/cartSync";
+import { prisma } from "@/lib/database/prisma";
 
 export async function POST(req: Request) {
   try {

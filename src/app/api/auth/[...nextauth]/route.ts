@@ -1,13 +1,13 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/database/prisma";
 import {
   checkRateLimit,
   clearRateLimit,
   formatRetryAfter,
   getClientIpFromHeaders,
   incrementRateLimit,
-} from "@/lib/rateLimit";
+} from "@/lib/auth/rateLimit";
 import bcrypt from "bcryptjs";
 
 const LOGIN_EMAIL_RATE_LIMIT = {

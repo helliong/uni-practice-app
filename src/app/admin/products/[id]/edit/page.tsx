@@ -3,13 +3,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { getProductImageValidationResult } from "@/lib/clientImageValidation";
+import { getProductImageValidationResult } from "@/lib/images/clientImageValidation";
 import {
   PRODUCT_IMAGE_ACCEPT,
   PRODUCT_IMAGE_MAX_FILES,
   PRODUCT_IMAGE_RULES_TEXT,
-} from "@/lib/imageUploadRules";
-import { variantKey } from "@/lib/productVariants";
+} from "@/lib/images/imageUploadRules";
+import { variantKey } from "@/lib/products/productVariants";
 
 type ImagesByColor = Record<string, string[]>;
 type ProductVariantForm = {

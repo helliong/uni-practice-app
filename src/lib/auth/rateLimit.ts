@@ -66,7 +66,12 @@ export function consumeRateLimit(key: string, config: RateLimitConfig): RateLimi
   const result = checkRateLimit(key, config);
   if (!result.allowed) return result;
 
-  return incrementRateLimit(key, config);
+  const incrementedResult = incrementRateLimit(key, config);
+  return {
+    ...incrementedResult,
+    allowed: true,
+    retryAfter: 0,
+  };
 }
 
 export function clearRateLimit(key: string) {

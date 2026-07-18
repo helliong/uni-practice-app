@@ -1,5 +1,5 @@
 "use server";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/database/prisma";
 import { Product } from "@/types";
 
 export async function getPublicProducts() {

@@ -40,7 +40,7 @@ const navigationItems: AdminNavigationItem[] = [
   { label: "Баннеры", icon: FiImage },
   { label: "Рассылки", icon: FiMail },
   { label: "Настройки", icon: FiSettings },
-  { label: "Журнал действий", icon: FiActivity },
+  { label: "Журнал действий", icon: FiActivity, href: "/admin/activity" },
 ];
 
 function isNavigationItemActive(pathname: string, href: string) {

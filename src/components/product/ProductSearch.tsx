@@ -5,8 +5,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getPublicProducts } from "@/actions/products";
-import { getProductSearchScore } from "@/lib/productSearch";
-import { generateSlug } from "@/lib/utils";
+import { getProductSearchScore } from "@/lib/products/productSearch";
+import { generateSlug } from "@/lib/shared/utils";
 import type { Product } from "@/types";
 
 const MIN_SUGGESTION_QUERY_LENGTH = 2;

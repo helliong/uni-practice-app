@@ -1,26 +1,26 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
-import { sendRegistrationCode } from "@/lib/mailer";
-import { prisma } from "@/lib/prisma";
-import { consumeRateLimit, getClientIp } from "@/lib/rateLimit";
+import { sendRegistrationCode } from "@/lib/auth/mailer";
+import { prisma } from "@/lib/database/prisma";
+import { consumeRateLimit, getClientIp } from "@/lib/auth/rateLimit";
 import {
   createVerificationCode,
   hashVerificationCode,
+  isRegistrationInputValid,
+  normalizeRegistrationEmail,
   VERIFICATION_CODE_TTL_MS,
-} from "@/lib/registrationVerification";
+} from "@/lib/auth/registrationVerification";
 
 const REGISTER_RATE_LIMIT = {
   limit: 5,
   windowMs: 60 * 60 * 1000,
 };
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const name = typeof body.name === "string" ? body.name.trim() : "";
-    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const email = normalizeRegistrationEmail(body.email);
     const password = typeof body.password === "string" ? body.password : "";
     const clientIp = getClientIp(req);
     const rateLimit = consumeRateLimit(
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!name || !EMAIL_PATTERN.test(email) || password.length < 8) {
+    if (!isRegistrationInputValid(name, email, password)) {
       return NextResponse.json(
         { message: "Проверьте имя, email и пароль (минимум 8 символов)." },
         { status: 400 },

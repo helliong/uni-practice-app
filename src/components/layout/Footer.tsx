@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme } from "@/context/ThemeContext";
 import { FaVk, FaTelegramPlane, FaInstagram, FaYoutube } from "react-icons/fa";
 import { FiPhone, FiMail, FiClock } from "react-icons/fi";
 import "./Footer.scss";

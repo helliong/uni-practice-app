@@ -6,7 +6,7 @@ import { FiChevronRight, FiGrid, FiList, FiChevronDown, FiCheck, FiRefreshCw } f
 import { LuShirt, LuBook, LuCoffee, LuShoppingBag, LuMonitor } from 'react-icons/lu';
 import { PiHoodie, PiBaseballCap, PiSticker } from 'react-icons/pi';
 import { getPublicItMerchProducts } from '../../actions/products';
-import ProductCard from '../../components/ProductCard';
+import ProductCard from '@/components/product/ProductCard';
 import type { Product } from '../../types';
 import '../catalog/page.scss';
 import './page.scss';

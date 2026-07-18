@@ -3,7 +3,7 @@ import { mkdir, writeFile } from 'fs/promises';
 import { extname, join } from 'path';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { validateProductImageUpload } from "@/lib/serverImageValidation";
+import { validateProductImageUpload } from "@/lib/images/serverImageValidation";
 
 const allowedUploadRoles = new Set(["SUPERADMIN", "UNIVERSITY_ADMIN"]);
 const VERIFICATION_DOCUMENT_MAX_SIZE_BYTES = 10 * 1024 * 1024;

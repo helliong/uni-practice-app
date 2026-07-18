@@ -37,6 +37,7 @@ model User {
   favorites Favorite[]
   cartItems CartItem[]
   verificationRequests VerificationRequest[]
+  auditLogs AuditLog[]
 }
 
 model RegistrationVerification {
@@ -138,4 +139,29 @@ model VerificationRequest {
 
   user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   university   University         @relation(fields: [universityId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorId      String?
+  actorName    String?
+  actorEmail   String
+  action       String
+  section      String
+  entityType   String
+  entityId     String?
+  entityLabel  String
+  details      String?
+  changes      Json?
+  ipAddress    String?
+  universityId String?
+  createdAt    DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([actorId])
+  @@index([action])
+  @@index([section])
+  @@index([universityId])
 }

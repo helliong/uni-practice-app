@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import { useCart } from "../context/CartContext";
-import { useFavorites } from "../context/FavoritesContext";
-import AuthModal from "./AuthModal";
-import ProductSearch from "./ProductSearch";
+import { useCart } from "@/context/CartContext";
+import { useFavorites } from "@/context/FavoritesContext";
+import AuthModal from "@/components/auth/AuthModal";
+import ProductSearch from "@/components/product/ProductSearch";
 import "./Header.scss";
 
 export default function Header() {

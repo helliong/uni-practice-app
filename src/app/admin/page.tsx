@@ -12,7 +12,7 @@ import {
   FiUsers,
 } from "react-icons/fi";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/database/prisma";
 import "./page.scss";
 
 const formatNumber = new Intl.NumberFormat("ru-RU");

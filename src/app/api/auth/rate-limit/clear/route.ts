@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { clearRateLimit, getClientIp } from "@/lib/rateLimit";
+import { clearRateLimit, getClientIp } from "@/lib/auth/rateLimit";
 
 export async function POST(request: Request) {
   if (process.env.NODE_ENV === "production") {

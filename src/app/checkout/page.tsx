@@ -19,8 +19,8 @@ import { useCart } from "@/context/CartContext";
 import {
   getStudentDiscountAmount,
   STUDENT_DISCOUNT_PERCENT,
-} from "@/lib/pricing";
-import { getProductImagesForColor } from "@/lib/productVariants";
+} from "@/lib/cart/pricing";
+import { getProductImagesForColor } from "@/lib/products/productVariants";
 import { CartItem } from "@/types";
 import "./page.scss";
 

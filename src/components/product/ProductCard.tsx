@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Product } from '../types';
-import { generateSlug } from '../lib/utils';
-import { useCart } from '../context/CartContext';
-import { useFavorites } from '../context/FavoritesContext';
-import { getProductImagesForColor, hasVariantStock } from '../lib/productVariants';
+import { Product } from '@/types';
+import { generateSlug } from '@/lib/shared/utils';
+import { useCart } from '@/context/CartContext';
+import { useFavorites } from '@/context/FavoritesContext';
+import { getProductImagesForColor, hasVariantStock } from '@/lib/products/productVariants';
 import './ProductCard.scss';
 
 const categoryNames: Record<string, string> = {

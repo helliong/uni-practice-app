@@ -1,6 +1,6 @@
 import { Metadata } from "next";
-import ProfilePageHeader from "@/components/ProfilePageHeader";
-import ProfileSidebar from "@/components/ProfileSidebar";
+import ProfilePageHeader from "@/components/profile/ProfilePageHeader";
+import ProfileSidebar from "@/components/profile/ProfileSidebar";
 import "./layout.scss";
 
 export const metadata: Metadata = {

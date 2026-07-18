@@ -5,8 +5,8 @@ import {
   filterValidFavoriteIds,
   getMissingFavoriteIds,
   mergeFavoriteIds,
-} from "@/lib/favoritesSync";
-import { prisma } from "@/lib/prisma";
+} from "@/lib/cart/favoritesSync";
+import { prisma } from "@/lib/database/prisma";
 
 export async function POST(req: Request) {
   try {

@@ -17,8 +17,8 @@ export const metadata: Metadata = {
   description: "Магазин IT и университетской атрибутики.",
 };
 
-import Header from "../components/Header";
-import Footer from "../components/Footer";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import { Providers } from "../context/Providers";
 
 export default function RootLayout({

@@ -3,8 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { generateSlug } from "../../../lib/utils";
-import ProductCard from "../../../components/ProductCard";
+import { generateSlug } from "@/lib/shared/utils";
+import ProductCard from "@/components/product/ProductCard";
 import { getPublicProducts } from "../../../actions/products";
 import {
   FiChevronRight,
@@ -30,7 +30,7 @@ import {
   getAvailableSizesForColor,
   getProductImagesForColor,
   hasVariantStock,
-} from "@/lib/productVariants";
+} from "@/lib/products/productVariants";
 
 type ProductClientProps = {
   product: Product;

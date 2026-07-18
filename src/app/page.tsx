@@ -1,6 +1,6 @@
 import "./page.scss";
 import { getPublicProducts } from "../actions/products";
-import ProductCard from "../components/ProductCard";
+import ProductCard from "@/components/product/ProductCard";
 import Image from "next/image";
 import Link from "next/link";
 import { FiFeather, FiGift, FiTruck } from "react-icons/fi";

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import ProductClient from './ProductClient';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/database/prisma';
 import './page.scss';
 
 export default async function ProductPage({
@@ -42,7 +42,7 @@ export default async function ProductPage({
     });
     
     // Используем единую функцию генерации слага
-    const { generateSlug } = await import('@/lib/utils');
+    const { generateSlug } = await import('@/lib/shared/utils');
 
     const matched = allProducts.find(p => p.sku && fullPath === `${p.sku}-${generateSlug(p.name)}`);
     

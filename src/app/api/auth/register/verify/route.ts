@@ -1,11 +1,14 @@
 import { Role } from "@prisma/client";
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { consumeRateLimit, getClientIp } from "@/lib/rateLimit";
+import { prisma } from "@/lib/database/prisma";
+import { consumeRateLimit, getClientIp } from "@/lib/auth/rateLimit";
 import {
+  getEmailDomain,
+  getVerificationAvailability,
   isVerificationCodeValid,
-  MAX_VERIFICATION_ATTEMPTS,
-} from "@/lib/registrationVerification";
+  isSixDigitVerificationCode,
+  normalizeRegistrationEmail,
+} from "@/lib/auth/registrationVerification";
 
 const VERIFY_RATE_LIMIT = {
   limit: 10,
@@ -15,7 +18,7 @@ const VERIFY_RATE_LIMIT = {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const email = normalizeRegistrationEmail(body.email);
     const code = typeof body.code === "string" ? body.code.trim() : "";
     const rateLimit = consumeRateLimit(
       `register-verify:${getClientIp(req)}:${email || "unknown"}`,
@@ -29,7 +32,7 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!email || !/^\d{6}$/.test(code)) {
+    if (!email || !isSixDigitVerificationCode(code)) {
       return NextResponse.json(
         { message: "Введите шестизначный код." },
         { status: 400 },
@@ -40,14 +43,16 @@ export async function POST(req: Request) {
       where: { email },
     });
 
-    if (!verification || verification.expiresAt <= new Date()) {
+    const verificationAvailability = getVerificationAvailability(verification);
+
+    if (!verification || verificationAvailability === "EXPIRED") {
       return NextResponse.json(
         { message: "Код истёк. Запросите новый код." },
         { status: 410 },
       );
     }
 
-    if (verification.attempts >= MAX_VERIFICATION_ATTEMPTS) {
+    if (verificationAvailability === "ATTEMPTS_EXCEEDED") {
       return NextResponse.json(
         { message: "Превышено число попыток. Запросите новый код." },
         { status: 429 },
@@ -66,7 +71,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const emailDomain = email.split("@")[1];
+    const emailDomain = getEmailDomain(email);
     const university = emailDomain
       ? await prisma.university.findFirst({
           where: { emailDomains: { has: emailDomain } },

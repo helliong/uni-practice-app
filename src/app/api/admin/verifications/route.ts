@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/database/prisma";
+import { createAuditLogData } from "@/lib/audit/auditLog";
 
 export async function GET() {
   try {
@@ -58,7 +59,11 @@ export async function PUT(req: Request) {
     }
 
     const verificationReq = await prisma.verificationRequest.findUnique({
-      where: { id: requestId }
+      where: { id: requestId },
+      include: {
+        user: { select: { name: true, email: true } },
+        university: { select: { shortName: true } },
+      },
     });
 
     if (!verificationReq) {
@@ -70,20 +75,42 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Нет доступа к заявкам этого университета" }, { status: 403 });
     }
 
-    const updatedReq = await prisma.verificationRequest.update({
-      where: { id: requestId },
-      data: { status }
-    });
-
-    if (status === "APPROVED") {
-      await prisma.user.update({
-        where: { id: verificationReq.userId },
-        data: { 
-          role: "STUDENT", 
-          universityId: verificationReq.universityId 
-        }
+    const updatedReq = await prisma.$transaction(async (transaction) => {
+      const updatedVerification = await transaction.verificationRequest.update({
+        where: { id: requestId },
+        data: { status },
       });
-    }
+
+      if (status === "APPROVED") {
+        await transaction.user.update({
+          where: { id: verificationReq.userId },
+          data: {
+            role: "STUDENT",
+            universityId: verificationReq.universityId,
+          },
+        });
+      }
+
+      await transaction.auditLog.create({
+        data: createAuditLogData({
+          request: req,
+          actor: user,
+          action: status === "APPROVED" ? "APPROVE" : "REJECT",
+          section: "VERIFICATIONS",
+          entityType: "VERIFICATION_REQUEST",
+          entityId: verificationReq.id,
+          entityLabel: verificationReq.user.name || verificationReq.user.email,
+          details: `${status === "APPROVED" ? "Одобрена" : "Отклонена"} заявка на статус (${verificationReq.university.shortName})`,
+          changes: {
+            before: verificationReq.status,
+            after: status,
+          },
+          universityId: verificationReq.universityId,
+        }),
+      });
+
+      return updatedVerification;
+    });
 
     return NextResponse.json(updatedReq);
   } catch (error) {

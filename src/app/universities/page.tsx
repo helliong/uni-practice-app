@@ -13,7 +13,7 @@ import {
   FiCheck,
 } from "react-icons/fi";
 import { Product } from "@/types";
-import ProductCard from "@/components/ProductCard";
+import ProductCard from "@/components/product/ProductCard";
 import { getPublicProducts, getPublicUniversities } from "@/actions/products";
 import { useEffect } from "react";
 import "./page.scss";

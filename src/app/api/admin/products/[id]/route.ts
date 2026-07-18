@@ -1,35 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { prisma } from '@/lib/prisma';
-
-type ProductVariantPayload = {
-  color?: string;
-  size?: string;
-  stock?: number | string;
-  sku?: string;
-};
-
-function normalizeVariants(variants: ProductVariantPayload[] | undefined) {
-  if (!Array.isArray(variants)) return [];
-
-  return variants
-    .map((variant) => ({
-      color: variant.color || undefined,
-      size: variant.size || undefined,
-      stock: Math.max(0, Number(variant.stock) || 0),
-      sku: variant.sku || undefined,
-    }))
-    .filter((variant) => variant.color || variant.size);
-}
-
-function getTotalStock(variants: ReturnType<typeof normalizeVariants>, fallback: unknown) {
-  if (variants.length > 0) {
-    return variants.reduce((total, variant) => total + variant.stock, 0);
-  }
-
-  return Number(fallback) || 0;
-}
+import { prisma } from '@/lib/database/prisma';
+import { createAuditLogData } from '@/lib/audit/auditLog';
+import {
+  getChangedProductFields,
+  getProductTotalStock,
+  normalizeProductSku,
+  normalizeProductVariants,
+} from '@/lib/products/productAdmin';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -89,31 +68,80 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       : data.universityId || existingProduct.universityId;
 
     const slug = data.slug || existingProduct.slug;
-    const variants = normalizeVariants(data.variants);
-    const stockCount = getTotalStock(variants, data.stockCount);
+    const variants = normalizeProductVariants(data.variants);
+    const stockCount = getProductTotalStock(variants, data.stockCount);
 
-    const updatedProduct = await prisma.product.update({
-      where: { id },
-      data: {
-        name: data.name,
-        slug: slug,
-        sku: data.sku.trim().replace(/\s+/g, '-'),
-        description: data.description || "",
-        price: Number(data.price),
-        oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
-        imageUrl: data.imageUrl,
-        images: data.images || (data.imageUrl ? [data.imageUrl] : []),
-        imagesByColor: data.imagesByColor || {},
-        category: data.category,
-        availableSizes: data.availableSizes || [],
-        availableColors: data.availableColors || [],
-        materials: data.materials || [],
-        stockCount,
-        variants,
-        inStock: data.inStock !== undefined ? data.inStock : stockCount > 0,
-        universityId: universityIdToUse as string | null,
-        isPublished: data.isPublished !== undefined ? data.isPublished : true,
-      }
+    const nextPrice = Number(data.price);
+    const nextPublishedState = data.isPublished !== undefined ? data.isPublished : true;
+    const changedFields = getChangedProductFields(existingProduct, {
+      name: data.name,
+      price: nextPrice,
+      stockCount,
+      category: data.category,
+      isPublished: nextPublishedState,
+      universityId: universityIdToUse as string | null,
+    });
+
+    const updatedProduct = await prisma.$transaction(async (transaction) => {
+      const product = await transaction.product.update({
+        where: { id },
+        data: {
+          name: data.name,
+          slug: slug,
+          sku: normalizeProductSku(data.sku),
+          description: data.description || "",
+          price: nextPrice,
+          oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
+          imageUrl: data.imageUrl,
+          images: data.images || (data.imageUrl ? [data.imageUrl] : []),
+          imagesByColor: data.imagesByColor || {},
+          category: data.category,
+          availableSizes: data.availableSizes || [],
+          availableColors: data.availableColors || [],
+          materials: data.materials || [],
+          stockCount,
+          variants,
+          inStock: data.inStock !== undefined ? data.inStock : stockCount > 0,
+          universityId: universityIdToUse as string | null,
+          isPublished: nextPublishedState,
+        },
+      });
+
+      await transaction.auditLog.create({
+        data: createAuditLogData({
+          request,
+          actor: session.user,
+          action: "UPDATE",
+          section: "PRODUCTS",
+          entityType: "PRODUCT",
+          entityId: product.id,
+          entityLabel: product.name,
+          details: changedFields.length > 0
+            ? `Изменены: ${changedFields.join(", ")}`
+            : "Товар сохранён без изменения основных полей",
+          changes: {
+            before: {
+              name: existingProduct.name,
+              price: existingProduct.price,
+              stockCount: existingProduct.stockCount,
+              category: existingProduct.category,
+              isPublished: existingProduct.isPublished,
+              universityId: existingProduct.universityId,
+            },
+            after: {
+              name: product.name,
+              price: product.price,
+              stockCount: product.stockCount,
+              category: product.category,
+              isPublished: product.isPublished,
+              universityId: product.universityId,
+            },
+          },
+          universityId: product.universityId,
+        }),
+      });
+
+      return product;
     });
 
     return NextResponse.json(updatedProduct);
@@ -144,8 +172,24 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    await prisma.product.delete({
-      where: { id: id }
+    await prisma.$transaction(async (transaction) => {
+      await transaction.product.delete({
+        where: { id },
+      });
+
+      await transaction.auditLog.create({
+        data: createAuditLogData({
+          request,
+          actor: session.user,
+          action: "DELETE",
+          section: "PRODUCTS",
+          entityType: "PRODUCT",
+          entityId: product.id,
+          entityLabel: product.name,
+          details: "Удалён товар",
+          universityId: product.universityId,
+        }),
+      });
     });
 
     return NextResponse.json({ success: true });

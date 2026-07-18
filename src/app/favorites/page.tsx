@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { useMemo, useState, useEffect } from "react";
 import { FiCheck, FiRefreshCw } from "react-icons/fi";
-import ProductCard from "@/components/ProductCard";
+import ProductCard from "@/components/product/ProductCard";
 import { useFavorites } from "@/context/FavoritesContext";
 import { Product } from "@/types";
 import "./page.scss";

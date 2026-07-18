@@ -1,35 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { prisma } from '@/lib/prisma';
-
-type ProductVariantPayload = {
-  color?: string;
-  size?: string;
-  stock?: number | string;
-  sku?: string;
-};
-
-function normalizeVariants(variants: ProductVariantPayload[] | undefined) {
-  if (!Array.isArray(variants)) return [];
-
-  return variants
-    .map((variant) => ({
-      color: variant.color || undefined,
-      size: variant.size || undefined,
-      stock: Math.max(0, Number(variant.stock) || 0),
-      sku: variant.sku || undefined,
-    }))
-    .filter((variant) => variant.color || variant.size);
-}
-
-function getTotalStock(variants: ReturnType<typeof normalizeVariants>, fallback: unknown) {
-  if (variants.length > 0) {
-    return variants.reduce((total, variant) => total + variant.stock, 0);
-  }
-
-  return Number(fallback) || 0;
-}
+import { prisma } from '@/lib/database/prisma';
+import { createAuditLogData } from '@/lib/audit/auditLog';
+import { getProductTotalStock, normalizeProductSku, normalizeProductVariants } from '@/lib/products/productAdmin';
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
@@ -78,33 +52,51 @@ export async function POST(request: Request) {
     const universityIdToUse = session.user.role === "UNIVERSITY_ADMIN" 
       ? session.user.universityId 
       : data.universityId || null;
-    const variants = normalizeVariants(data.variants);
-    const stockCount = getTotalStock(variants, data.stockCount);
+    const variants = normalizeProductVariants(data.variants);
+    const stockCount = getProductTotalStock(variants, data.stockCount);
 
     // We can auto-generate a slug from the name if not provided
     const slug = data.slug || data.name.toLowerCase().replace(/[^a-z0-9а-яё]+/gi, '-') + '-' + Date.now();
 
-    const product = await prisma.product.create({
-      data: {
-        name: data.name,
-        slug: slug,
-        sku: data.sku.trim().replace(/\s+/g, '-'),
-        description: data.description || "",
-        price: Number(data.price),
-        oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
-        imageUrl: data.imageUrl,
-        images: data.images || (data.imageUrl ? [data.imageUrl] : []),
-        imagesByColor: data.imagesByColor || {},
-        category: data.category,
-        availableSizes: data.availableSizes || [],
-        availableColors: data.availableColors || [],
-        materials: data.materials || [],
-        stockCount,
-        variants,
-        inStock: data.inStock !== undefined ? data.inStock : stockCount > 0,
-        universityId: universityIdToUse as string | null,
-        isPublished: data.isPublished !== undefined ? data.isPublished : true,
-      }
+    const product = await prisma.$transaction(async (transaction) => {
+      const createdProduct = await transaction.product.create({
+        data: {
+          name: data.name,
+          slug: slug,
+          sku: normalizeProductSku(data.sku),
+          description: data.description || "",
+          price: Number(data.price),
+          oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
+          imageUrl: data.imageUrl,
+          images: data.images || (data.imageUrl ? [data.imageUrl] : []),
+          imagesByColor: data.imagesByColor || {},
+          category: data.category,
+          availableSizes: data.availableSizes || [],
+          availableColors: data.availableColors || [],
+          materials: data.materials || [],
+          stockCount,
+          variants,
+          inStock: data.inStock !== undefined ? data.inStock : stockCount > 0,
+          universityId: universityIdToUse as string | null,
+          isPublished: data.isPublished !== undefined ? data.isPublished : true,
+        },
+      });
+
+      await transaction.auditLog.create({
+        data: createAuditLogData({
+          request,
+          actor: session.user,
+          action: "CREATE",
+          section: "PRODUCTS",
+          entityType: "PRODUCT",
+          entityId: createdProduct.id,
+          entityLabel: createdProduct.name,
+          details: "Создан товар",
+          universityId: createdProduct.universityId,
+        }),
+      });
+
+      return createdProduct;
     });
 
     return NextResponse.json(product);

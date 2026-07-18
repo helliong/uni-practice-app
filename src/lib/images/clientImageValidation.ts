@@ -7,7 +7,7 @@ import {
   PRODUCT_IMAGE_MIN_HEIGHT,
   PRODUCT_IMAGE_MIN_WIDTH,
   PRODUCT_IMAGE_MAX_SIZE_BYTES,
-} from "@/lib/imageUploadRules";
+} from "@/lib/images/imageUploadRules";
 
 type ImageDimensions = {
   width: number;

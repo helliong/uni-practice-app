@@ -6,13 +6,13 @@ import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
-import { mockProducts } from "@/lib/mockData";
-import { generateSlug } from "@/lib/utils";
-import ProductCard from "@/components/ProductCard";
+import { mockProducts } from "@/lib/data/mockData";
+import { generateSlug } from "@/lib/shared/utils";
+import ProductCard from "@/components/product/ProductCard";
 import { Product } from "@/types";
 import { getPublicProducts } from "@/actions/products";
-import { getStudentDiscountAmount, STUDENT_DISCOUNT_PERCENT } from "@/lib/pricing";
-import { getProductImagesForColor } from "@/lib/productVariants";
+import { getStudentDiscountAmount, STUDENT_DISCOUNT_PERCENT } from "@/lib/cart/pricing";
+import { getProductImagesForColor } from "@/lib/products/productVariants";
 import "./page.scss";
 
 const colorNames: Record<string, string> = {
