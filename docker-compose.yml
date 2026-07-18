@@ -29,6 +29,11 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-uni_user}:${POSTGRES_PASSWORD:-uni_password}@postgres:5432/${POSTGRES_DB:-uni_practice_app}?schema=public
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-me-before-deploy}
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3001}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM: ${SMTP_FROM}
     ports:
       - "${APP_PORT:-3001}:3000"
     volumes:

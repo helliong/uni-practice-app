@@ -72,6 +72,11 @@
    DATABASE_URL="postgresql://user:password@localhost:5432/uni_practice_app?schema=public"
    NEXTAUTH_SECRET="your-secret-key"
    NEXTAUTH_URL="http://localhost:3000"
+   SMTP_HOST="smtp.example.com"
+   SMTP_PORT="587"
+   SMTP_USER="mailer@example.com"
+   SMTP_PASSWORD="smtp-password"
+   SMTP_FROM="Campus & Code <mailer@example.com>"
    ```
 
 3. Применить миграции и сгенерировать Prisma Client:

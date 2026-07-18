@@ -32,6 +32,9 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState("");
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{
     name?: string;
     email?: string;
@@ -40,7 +43,7 @@ export default function RegisterPage() {
   }>({});
 
   const validate = () => {
-    const errors: any = {};
+    const errors: typeof fieldErrors = {};
     if (!name.trim()) errors.name = "Имя обязательно";
     if (!email.trim()) {
       errors.email = "Email обязателен";
@@ -56,6 +59,29 @@ export default function RegisterPage() {
     return Object.keys(errors).length === 0;
   };
 
+  const requestVerificationCode = async () => {
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setVerificationEmail(data.email);
+      } else {
+        setError(data.message || "Ошибка регистрации");
+      }
+    } catch {
+      setError("Не удалось связаться с сервером");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -67,19 +93,37 @@ export default function RegisterPage() {
 
     if (!validate()) return;
 
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name, email, password }),
-    });
+    await requestVerificationCode();
+  };
 
-    if (res.ok) {
-      router.push("/login");
-    } else {
+  const handleVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (!/^\d{6}$/.test(verificationCode)) {
+      setError("Введите шестизначный код");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch("/api/auth/register/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: verificationEmail, code: verificationCode }),
+      });
       const data = await res.json();
-      setError(data.message || "Ошибка регистрации");
+
+      if (res.ok) {
+        router.push("/login?registered=1");
+      } else {
+        setError(data.message || "Ошибка подтверждения почты");
+      }
+    } catch {
+      setError("Не удалось связаться с сервером");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -141,8 +185,61 @@ export default function RegisterPage() {
         </div>
 
         <div className="login-card-right">
-          <h3>Создайте аккаунт</h3>
+          <h3>{verificationEmail ? "Подтвердите почту" : "Создайте аккаунт"}</h3>
 
+          {verificationEmail ? (
+            <form className="login-form verification-form" onSubmit={handleVerification}>
+              {error && <div className="error-message">{error}</div>}
+              <p className="verification-description">
+                Мы отправили код из 6 цифр на <strong>{verificationEmail}</strong>.
+                Код действует 10 минут.
+              </p>
+              <div className="form-group">
+                <label htmlFor="verificationCode">Код подтверждения</label>
+                <div className="input-wrapper">
+                  <FiMail className="input-icon" />
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    id="verificationCode"
+                    maxLength={6}
+                    placeholder="000000"
+                    value={verificationCode}
+                    onChange={(e) => {
+                      setVerificationCode(e.target.value.replace(/\D/g, ""));
+                      setError("");
+                    }}
+                    className="verification-code-input"
+                    autoFocus
+                  />
+                </div>
+              </div>
+              <button type="submit" className="submit-btn" disabled={isSubmitting}>
+                {isSubmitting ? "Проверяем..." : "Подтвердить почту"}
+              </button>
+              <button
+                type="button"
+                className="verification-back-btn"
+                disabled={isSubmitting}
+                onClick={requestVerificationCode}
+              >
+                Отправить код повторно
+              </button>
+              <button
+                type="button"
+                className="verification-back-btn"
+                disabled={isSubmitting}
+                onClick={() => {
+                  setVerificationEmail("");
+                  setVerificationCode("");
+                  setError("");
+                }}
+              >
+                Изменить данные
+              </button>
+            </form>
+          ) : (
           <form className="login-form" onSubmit={handleSubmit} noValidate>
             {error && <div className="error-message">{error}</div>}
 
@@ -266,10 +363,11 @@ export default function RegisterPage() {
               </label>
             </div>
 
-            <button type="submit" className="submit-btn">
-              Зарегистрироваться
+            <button type="submit" className="submit-btn" disabled={isSubmitting}>
+              {isSubmitting ? "Отправляем код..." : "Зарегистрироваться"}
             </button>
           </form>
+          )}
 
           <div className="divider">
             <span>или</span>
