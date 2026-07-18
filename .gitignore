@@ -48,3 +48,6 @@ next-env.d.ts
 
 # documents
 /docs/
+
+AGENTS.md
+CLAUDE.md

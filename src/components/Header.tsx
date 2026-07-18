@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useState } from "react";
+import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useCart } from "../context/CartContext";
 import { useFavorites } from "../context/FavoritesContext";
 import AuthModal from "./AuthModal";
+import ProductSearch from "./ProductSearch";
 import "./Header.scss";
 
 export default function Header() {
@@ -23,10 +24,6 @@ export default function Header() {
   const isFavoritesActive = pathname?.startsWith('/favorites');
   const isCartActive = pathname?.startsWith('/cart') || pathname?.startsWith('/checkout');
   const isProfileActive = isProfilePopupOpen || pathname?.startsWith('/login') || pathname?.startsWith('/register');
-
-  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-  };
 
   return (
     <header className="site-header">
@@ -66,22 +63,7 @@ export default function Header() {
             О нас
           </Link>
         </nav>
-        <form
-          className="search-form"
-          role="search"
-          onSubmit={handleSearchSubmit}
-        >
-          <input
-            type="search"
-            placeholder="Поиск по товарам"
-            aria-label="Поиск по товарам"
-          />
-          <button type="submit" aria-label="Найти">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M10.5 4a6.5 6.5 0 0 1 5.18 10.43l3.45 3.44a1 1 0 0 1-1.42 1.42l-3.44-3.45A6.5 6.5 0 1 1 10.5 4Zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z" />
-            </svg>
-          </button>
-        </form>
+        <ProductSearch />
         <nav className="user-navigation" aria-label="Пользовательское меню">
           {session ? (
             <Link 

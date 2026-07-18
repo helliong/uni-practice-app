@@ -17,6 +17,9 @@ const categoryLabels: Record<Product["category"], string> = {
   mug: "Кружки",
   sticker: "Стикеры",
   accessories: "Аксессуары",
+  bags: "Сумки",
+  notebooks: "Блокноты",
+  gadgets: "Гаджеты",
   other: "Разное",
 };
 

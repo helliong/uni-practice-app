@@ -13,7 +13,19 @@
 2. Проверить значения в `.env`.
 
    Для локального запуска можно оставить `NEXTAUTH_URL=http://localhost:3001`.
-   Перед деплоем на сервер обязательно заменить `POSTGRES_PASSWORD`, `NEXTAUTH_SECRET` и `NEXTAUTH_URL`.
+   Перед деплоем на сервер обязательно заменить `POSTGRES_PASSWORD`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL` и SMTP-настройки.
+
+   Отправка шестизначного кода при регистрации требует рабочего SMTP-аккаунта:
+
+   ```env
+   SMTP_HOST=smtp.example.com
+   SMTP_PORT=587
+   SMTP_USER=mailer@example.com
+   SMTP_PASSWORD=application_password
+   SMTP_FROM=Campus & Code <mailer@example.com>
+   ```
+
+   В `SMTP_PASSWORD` нужно указывать пароль приложения почтового сервиса. Для SSL обычно используется порт `465`, для STARTTLS — `587`.
 
 3. Собрать и запустить контейнеры:
 
@@ -71,6 +83,11 @@ POSTGRES_PASSWORD=strong_password
 POSTGRES_DB=uni_practice_app
 NEXTAUTH_URL=https://your-domain.example
 NEXTAUTH_SECRET=strong_random_secret
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=mailer@example.com
+SMTP_PASSWORD=application_password
+SMTP_FROM=Campus & Code <mailer@example.com>
 APP_PORT=3000
 ```
 

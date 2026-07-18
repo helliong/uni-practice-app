@@ -8,6 +8,8 @@ import { LuShirt, LuBook, LuCoffee, LuShoppingBag, LuTerminal } from 'react-icon
 import { PiHoodie, PiBaseballCap, PiSticker } from 'react-icons/pi';
 import { getPublicProducts } from '../../actions/products';
 import ProductCard from '../../components/ProductCard';
+import { matchesProductSearch } from '../../lib/productSearch';
+import type { Product } from '../../types';
 import './page.scss';
 
 const baseTopCategories = [
@@ -63,13 +65,14 @@ function CatalogContent() {
 
   // Read initial category from URL
   const initialCategory = searchParams.get('category') || 'all';
+  const searchQuery = searchParams.get('q')?.trim() || '';
 
   // Filters state
   const [draftFilters, setDraftFilters] = useState<FilterState>({ ...defaultFilters, category: initialCategory });
   const [appliedFilters, setAppliedFilters] = useState<FilterState>({ ...defaultFilters, category: initialCategory });
 
   // Update URL when applied category changes
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [maxPriceLimit, setMaxPriceLimit] = useState(5000);
 
@@ -165,6 +168,8 @@ function CatalogContent() {
   // Filter products
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
+      if (!matchesProductSearch(product, searchQuery)) return false;
+
       if (appliedFilters.category !== 'all' && product.category !== appliedFilters.category) return false;
       
       if (product.price < appliedFilters.priceRange[0] || product.price > appliedFilters.priceRange[1]) return false;
@@ -185,7 +190,7 @@ function CatalogContent() {
       
       return true;
     });
-  }, [appliedFilters, products]);
+  }, [appliedFilters, products, searchQuery]);
 
   const topCategories = useMemo(() => {
     return baseTopCategories.map(cat => {
@@ -205,8 +210,12 @@ function CatalogContent() {
         
         <div className="catalog-title-row">
           <div className="title-block">
-            <h1>Каталог</h1>
-            <p>Мерч для тех, кто учится, кодит и создаёт.</p>
+            <h1>{searchQuery ? "Результаты поиска" : "Каталог"}</h1>
+            <p>
+              {searchQuery
+                ? <>По запросу «{searchQuery}»</>
+                : "Мерч для тех, кто учится, кодит и создаёт."}
+            </p>
           </div>
           <div className="products-count">
             Показано: {filteredProducts.length} товаров
@@ -416,7 +425,7 @@ function CatalogContent() {
             {loadingProducts ? (
                <p style={{ padding: '2rem' }}>Загрузка товаров...</p>
             ) : filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product as any} />
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
 
