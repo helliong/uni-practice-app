@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import { mkdir, writeFile } from 'fs/promises';
 import { extname, join } from 'path';
+import { randomUUID } from "crypto";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { optimizeProductImage } from "@/lib/images/productImageOptimization";
 import { validateProductImageUpload } from "@/lib/images/serverImageValidation";
+import { uploadPublicObject } from "@/lib/storage/s3";
 
 const allowedUploadRoles = new Set(["SUPERADMIN", "UNIVERSITY_ADMIN"]);
 const VERIFICATION_DOCUMENT_MAX_SIZE_BYTES = 10 * 1024 * 1024;
@@ -114,18 +117,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
-    // Save to public/uploads
-    // Using a simple timestamp + random string to avoid name collisions
-    const fileName = getSafeFileName(file.name);
-    const uploadDir = join(process.cwd(), 'public', 'uploads');
-    
-    await mkdir(uploadDir, { recursive: true });
+    const optimizedImage = await optimizeProductImage(buffer);
+    const url = await uploadPublicObject({
+      body: optimizedImage,
+      contentType: "image/webp",
+      objectKey: `products/${randomUUID()}.webp`,
+    });
 
-    const path = join(uploadDir, fileName);
-    await writeFile(path, buffer);
-
-    // Return the public URL
-    return NextResponse.json({ url: `/uploads/${fileName}` });
+    return NextResponse.json({ url });
   } catch (error) {
     console.error('Error uploading file:', error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

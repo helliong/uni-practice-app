@@ -88,6 +88,13 @@ SMTP_PORT=587
 SMTP_USER=mailer@example.com
 SMTP_PASSWORD=application_password
 SMTP_FROM=Campus & Code <mailer@example.com>
+S3_ENDPOINT=https://s3.example.com
+S3_REGION=region
+S3_BUCKET=campuscode-products
+S3_ACCESS_KEY_ID=s3-access-key
+S3_SECRET_ACCESS_KEY=s3-secret-key
+S3_PUBLIC_URL=https://cdn.example.com
+S3_FORCE_PATH_STYLE=false
 APP_PORT=3000
 ```
 

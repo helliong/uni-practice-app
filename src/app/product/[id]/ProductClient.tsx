@@ -182,7 +182,7 @@ export default function ProductClient({ product, initialVariant }: ProductClient
                   onClick={() => setActiveImageIdx(idx)}
                   style={{ position: 'relative', overflow: 'hidden' }}
                 >
-                  <Image src={imgUrl} alt={`${product.name} thumbnail ${idx + 1}`} fill style={{ objectFit: 'cover' }} sizes="80px" />
+                  <Image src={imgUrl} alt={`${product.name} thumbnail ${idx + 1}`} fill style={{ objectFit: 'cover' }} sizes="80px" unoptimized />
                 </div>
               ))}
             </div>
@@ -194,6 +194,7 @@ export default function ProductClient({ product, initialVariant }: ProductClient
                 className="main-product-image"
                 priority
                 sizes="(max-width: 768px) 100vw, 50vw"
+                unoptimized
               />
               <div className="badge" style={{ zIndex: 10 }}>NEW</div>
               <button className="favorite-btn" onClick={handleFavoriteToggle} style={{ zIndex: 10 }}>

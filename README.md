@@ -81,6 +81,13 @@
    SMTP_USER="mailer@example.com"
    SMTP_PASSWORD="smtp-password"
    SMTP_FROM="Campus & Code <mailer@example.com>"
+   S3_ENDPOINT="https://s3.example.com"
+   S3_REGION="region"
+   S3_BUCKET="campuscode-products"
+   S3_ACCESS_KEY_ID="s3-access-key"
+   S3_SECRET_ACCESS_KEY="s3-secret-key"
+   S3_PUBLIC_URL="https://cdn.example.com"
+   S3_FORCE_PATH_STYLE="false"
    ```
 
    Для `SMTP_PASSWORD` используйте отдельный пароль приложения почтового сервиса, а не основной пароль от аккаунта. Обычно порт `465` используется для SSL, а `587` — для STARTTLS. Адрес в `SMTP_FROM` должен соответствовать отправителю, разрешённому SMTP-сервисом.
@@ -148,10 +155,12 @@ npm.cmd run build
 
 Маршрут `POST /api/upload` поддерживает два сценария:
 
-- загрузка изображений товаров для `SUPERADMIN` и `UNIVERSITY_ADMIN`;
+- загрузка изображений товаров для `SUPERADMIN` и `UNIVERSITY_ADMIN` с преобразованием в WebP и сохранением в S3;
 - загрузка студенческого билета для авторизованного пользователя с `purpose=verification-document`.
 
 Для студенческого билета разрешены `JPG`, `PNG` и `PDF` до `10 МБ`. Файлы сохраняются в `public/uploads/verifications`.
+
+Для фотографий товаров разрешены `JPG`, `PNG` и `WEBP` до `5 МБ`. Перед отправкой в S3 изображения уменьшаются максимум до `2000x2000` и преобразуются в WebP с качеством `80`.
 
 ## Текущее состояние
 
