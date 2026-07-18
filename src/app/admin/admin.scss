@@ -5,47 +5,148 @@
 }
 
 .admin-sidebar {
-  width: 250px;
-  background: var(--bg-card);
+  position: sticky;
+  top: 0;
+  width: 224px;
+  height: 100vh;
+  flex: 0 0 224px;
+  padding: 1rem 0.75rem;
+  background:
+    linear-gradient(155deg, rgba(49, 107, 164, 0.06), transparent 48%),
+    var(--bg-card);
   border-right: 1px solid var(--border);
-  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  overflow-y: auto;
 
   .admin-logo {
-    font-size: 18px;
-    font-weight: 600;
+    margin: 0 0.45rem 1.25rem;
+    display: flex;
+    flex-direction: column;
     color: var(--text-main);
-    margin-bottom: 10px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.4;
   }
 
   .admin-nav {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 0.15rem;
 
     .admin-nav-link {
-      padding: 10px 15px;
+      min-height: 42px;
+      padding: 0.7rem 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
       color: var(--text-secondary);
       text-decoration: none;
       border-radius: 8px;
+      font-size: 0.82rem;
       transition:
         background 0.2s,
         color 0.2s;
+
+      > svg {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 auto;
+        stroke-width: 1.8;
+      }
 
       &:hover {
         background: var(--bg-section);
         color: var(--text-main);
       }
+
+      &.active {
+        color: #e7efff;
+        background: linear-gradient(100deg, #173769, #193b70);
+      }
+
+      &.upcoming {
+        cursor: default;
+
+        &:hover {
+          color: var(--text-secondary);
+          background: transparent;
+        }
+      }
+    }
+  }
+
+  .admin-logout {
+    width: 100%;
+    min-height: 42px;
+    margin-top: auto;
+    padding: 0.7rem 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    border: 0;
+    border-radius: 8px;
+    color: var(--text-secondary);
+    background: transparent;
+    font-family: inherit;
+    font-size: 0.82rem;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      background 0.2s,
+      color 0.2s;
+
+    svg {
+      width: 18px;
+      height: 18px;
+      flex: 0 0 auto;
+    }
+
+    &:hover {
+      color: var(--text-main);
+      background: var(--bg-section);
     }
   }
 }
 
 .admin-main {
+  min-width: 0;
   flex: 1;
   padding: 40px;
   overflow-y: auto;
+}
+
+@media (max-width: 900px) {
+  .admin-sidebar {
+    width: 72px;
+    flex-basis: 72px;
+    padding-inline: 0.55rem;
+
+    .admin-logo {
+      margin-inline: 0;
+      align-items: center;
+      font-size: 0;
+
+      &::before {
+        content: "C&C";
+        font-size: 0.9rem;
+      }
+    }
+
+    .admin-nav-link,
+    .admin-logout {
+      justify-content: center;
+      padding-inline: 0;
+
+      span {
+        display: none;
+      }
+    }
+  }
+
+  .admin-main {
+    padding: 1.5rem;
+  }
 }
 
 .admin-header {
