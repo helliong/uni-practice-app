@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getServerSession } from "next-auth/next";
-import type { Prisma } from "@prisma/client";
+import { OrderStatus, type Prisma } from "@prisma/client";
 import {
   FiClock,
   FiDollarSign,
@@ -26,13 +26,29 @@ const formatDateTime = new Intl.DateTimeFormat("ru-RU", {
   hour: "2-digit",
   minute: "2-digit",
 });
+const revenueOrderStatuses: OrderStatus[] = [
+  OrderStatus.PAID,
+  OrderStatus.PROCESSING,
+  OrderStatus.SHIPPED,
+  OrderStatus.DELIVERED,
+];
+const orderStatusLabels: Record<OrderStatus, string> = {
+  AWAITING_PAYMENT: "Ожидает оплаты",
+  PAID: "Оплачен",
+  PROCESSING: "Собирается",
+  SHIPPED: "Передан в доставку",
+  DELIVERED: "Доставлен",
+  CANCELED: "Отменён",
+  PAYMENT_FAILED: "Ошибка оплаты",
+  REFUNDED: "Возвращён",
+};
 
 type ActivityItem = {
   id: string;
   title: string;
   details: string;
   createdAt: Date;
-  type: "product" | "user" | "verification";
+  type: "order" | "product" | "user" | "verification";
 };
 
 function getLastSevenDays() {
@@ -52,6 +68,31 @@ function getDailyCounts(items: { createdAt: Date }[], days: Date[]) {
     nextDay.setDate(day.getDate() + 1);
     return items.filter((item) => item.createdAt >= day && item.createdAt < nextDay).length;
   });
+}
+
+function getDailyRevenue(items: { paidAt: Date | null; total: number }[], days: Date[]) {
+  return days.map((day) => {
+    const nextDay = new Date(day);
+    nextDay.setDate(day.getDate() + 1);
+    return items.reduce((total, item) => {
+      if (!item.paidAt || item.paidAt < day || item.paidAt >= nextDay) return total;
+      return total + item.total;
+    }, 0);
+  });
+}
+
+function formatItemsCount(count: number) {
+  const lastTwoDigits = count % 100;
+  const lastDigit = count % 10;
+  const label = lastTwoDigits >= 11 && lastTwoDigits <= 14
+    ? "товаров"
+    : lastDigit === 1
+      ? "товар"
+      : lastDigit >= 2 && lastDigit <= 4
+        ? "товара"
+        : "товаров";
+
+  return `${count} ${label}`;
 }
 
 function MetricSparkline({ values }: { values: number[] }) {
@@ -84,6 +125,9 @@ export default async function AdminDashboard() {
   const verificationWhere: Prisma.VerificationRequestWhereInput = scopedUniversityId
     ? { universityId: scopedUniversityId }
     : {};
+  const orderWhere: Prisma.OrderWhereInput = scopedUniversityId
+    ? { items: { some: { product: { universityId: scopedUniversityId } } } }
+    : {};
   const chartDays = getLastSevenDays();
   const chartStart = chartDays[0];
 
@@ -98,6 +142,10 @@ export default async function AdminDashboard() {
     recentUsers,
     chartProducts,
     chartUsers,
+    orderCount,
+    revenue,
+    recentOrders,
+    chartOrders,
   ] = await Promise.all([
     prisma.product.count({ where: productWhere }),
     prisma.product.count({ where: { ...productWhere, isPublished: true } }),
@@ -162,16 +210,64 @@ export default async function AdminDashboard() {
       where: { ...userWhere, createdAt: { gte: chartStart } },
       select: { createdAt: true },
     }),
+    prisma.order.count({ where: orderWhere }),
+    prisma.order.aggregate({
+      where: { ...orderWhere, status: { in: revenueOrderStatuses } },
+      _sum: { total: true },
+    }),
+    prisma.order.findMany({
+      where: orderWhere,
+      select: {
+        id: true,
+        number: true,
+        status: true,
+        total: true,
+        createdAt: true,
+        user: { select: { name: true, email: true } },
+        _count: { select: { items: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+    prisma.order.findMany({
+      where: {
+        ...orderWhere,
+        OR: [
+          { createdAt: { gte: chartStart } },
+          { status: { in: revenueOrderStatuses }, paidAt: { gte: chartStart } },
+        ],
+      },
+      select: { createdAt: true, paidAt: true, total: true, status: true },
+    }),
   ]);
 
   const dailyProductCounts = getDailyCounts(chartProducts, chartDays);
   const dailyUserCounts = getDailyCounts(chartUsers, chartDays);
-  const emptyMetricTrend = chartDays.map(() => 0);
-  const emptyRevenuePoints = chartDays
-    .map((_, index) => `${(index / (chartDays.length - 1)) * 700},185`)
+  const dailyOrderCounts = getDailyCounts(chartOrders, chartDays);
+  const dailyRevenue = getDailyRevenue(
+    chartOrders.filter((order) => revenueOrderStatuses.includes(order.status)),
+    chartDays,
+  );
+  const sevenDayRevenue = dailyRevenue.reduce((total, value) => total + value, 0);
+  const maxDailyRevenue = Math.max(...dailyRevenue, 1);
+  const hasRevenue = dailyRevenue.some((value) => value > 0);
+  const revenuePoints = dailyRevenue
+    .map((value, index) => {
+      const x = (index / Math.max(chartDays.length - 1, 1)) * 700;
+      const y = 184 - (value / maxDailyRevenue) * 144;
+      return `${x},${y}`;
+    })
     .join(" ");
+  const emptyMetricTrend = chartDays.map(() => 0);
 
   const activity: ActivityItem[] = [
+    ...recentOrders.map((order) => ({
+      id: `order-${order.id}`,
+      title: `Оформлен заказ ${order.number}`,
+      details: `${orderStatusLabels[order.status]} · ${formatNumber.format(order.total)} ₽`,
+      createdAt: order.createdAt,
+      type: "order" as const,
+    })),
     ...recentProducts.map((product) => ({
       id: `product-${product.id}`,
       title: `Добавлен товар «${product.name}»`,
@@ -200,19 +296,19 @@ export default async function AdminDashboard() {
   const metricCards = [
     {
       label: "Заказы",
-      value: "0",
-      note: "Нет данных о заказах",
+      value: formatNumber.format(orderCount),
+      note: orderCount > 0 ? "Всего оформлено" : "Заказов пока нет",
       icon: FiShoppingBag,
       tone: "blue",
-      trend: emptyMetricTrend,
+      trend: dailyOrderCounts,
     },
     {
       label: "Выручка",
-      value: "0 ₽",
-      note: "Нет данных о продажах",
+      value: `${formatNumber.format(revenue._sum.total || 0)} ₽`,
+      note: revenue._sum.total ? "По оплаченным заказам" : "Продаж пока нет",
       icon: FiDollarSign,
       tone: "green",
-      trend: emptyMetricTrend,
+      trend: dailyRevenue,
     },
     {
       label: "Пользователи",
@@ -280,17 +376,33 @@ export default async function AdminDashboard() {
               {[40, 88, 136, 184].map((y) => (
                 <line className="chart-grid-line" x1="0" x2="700" y1={y} y2={y} key={y} />
               ))}
-              <polyline className="chart-line empty" points={emptyRevenuePoints} />
+              <polyline className={`chart-line ${hasRevenue ? "" : "empty"}`} points={revenuePoints} />
+              {hasRevenue && dailyRevenue.map((value, index) => (
+                <circle
+                  cx={(index / Math.max(chartDays.length - 1, 1)) * 700}
+                  cy={184 - (value / maxDailyRevenue) * 144}
+                  r="4"
+                  key={chartDays[index].toISOString()}
+                />
+              ))}
             </svg>
-            <div className="chart-empty-message">
-              <strong>0 ₽</strong>
-              <span>Данные появятся после добавления заказов</span>
-            </div>
+            {!hasRevenue && (
+              <div className="chart-empty-message">
+                <strong>0 ₽</strong>
+                <span>Оплаченных заказов за последние 7 дней нет</span>
+              </div>
+            )}
+            {hasRevenue && (
+              <div className="chart-total">
+                <span>За 7 дней</span>
+                <strong>{formatNumber.format(sevenDayRevenue)} ₽</strong>
+              </div>
+            )}
             <div className="chart-labels">
-              {chartDays.map((day) => (
+              {chartDays.map((day, index) => (
                 <span key={day.toISOString()}>
                   {formatDate.format(day)}
-                  <strong>0 ₽</strong>
+                  <strong>{formatNumber.format(dailyRevenue[index])} ₽</strong>
                 </span>
               ))}
             </div>
@@ -304,9 +416,29 @@ export default async function AdminDashboard() {
               <p>Недавние покупки пользователей</p>
             </div>
           </div>
-          <div className="panel-empty-state">
-            Заказов пока нет
-          </div>
+          {recentOrders.length > 0 ? (
+            <div className="recent-orders-list">
+              {recentOrders.map((order) => (
+                <Link href="/admin/orders" className="recent-order-row" key={order.id}>
+                  <span className="recent-order-main">
+                    <strong>{order.number}</strong>
+                    <small>{order.user.name || order.user.email}</small>
+                  </span>
+                  <span className="recent-order-meta">
+                    <strong>{formatNumber.format(order.total)} ₽</strong>
+                    <small>{formatItemsCount(order._count.items)}</small>
+                  </span>
+                  <span className={`order-status ${order.status.toLowerCase()}`}>
+                    {orderStatusLabels[order.status]}
+                  </span>
+                  <time dateTime={order.createdAt.toISOString()}>{formatDateTime.format(order.createdAt)}</time>
+                </Link>
+              ))}
+              <Link className="all-orders-link" href="/admin/orders">Смотреть все заказы</Link>
+            </div>
+          ) : (
+            <div className="panel-empty-state">Заказов пока нет</div>
+          )}
         </section>
       </div>
 
@@ -381,7 +513,13 @@ export default async function AdminDashboard() {
           {activity.length > 0 ? (
             <div className="activity-list">
               {activity.map((item) => {
-                const Icon = item.type === "product" ? FiTag : item.type === "user" ? FiUsers : FiClock;
+                const Icon = item.type === "order"
+                  ? FiShoppingBag
+                  : item.type === "product"
+                    ? FiTag
+                    : item.type === "user"
+                      ? FiUsers
+                      : FiClock;
                 return (
                   <div className={`activity-row ${item.type}`} key={item.id}>
                     <span className="activity-icon"><Icon /></span>
