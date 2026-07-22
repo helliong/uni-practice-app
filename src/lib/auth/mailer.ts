@@ -7,13 +7,13 @@ function getSmtpConfig() {
   const rawPassword = process.env.SMTP_PASSWORD;
   const from = process.env.SMTP_FROM;
 
-  if (!host || !port || !user || !rawPassword || !from) {
+  if (!host || !port || !from || Boolean(user) !== Boolean(rawPassword)) {
     throw new Error("SMTP configuration is incomplete");
   }
 
-  const password = host === "smtp.gmail.com"
-    ? rawPassword.replace(/\s/g, "")
-    : rawPassword;
+  const password = rawPassword
+    ? host === "smtp.gmail.com" ? rawPassword.replace(/\s/g, "") : rawPassword
+    : undefined;
 
   return { host, port, user, password, from };
 }
@@ -24,10 +24,9 @@ export async function sendRegistrationCode(email: string, code: string) {
     host: config.host,
     port: config.port,
     secure: config.port === 465,
-    auth: {
-      user: config.user,
-      pass: config.password,
-    },
+    ...(config.user && config.password
+      ? { auth: { user: config.user, pass: config.password } }
+      : {}),
   });
 
   await transporter.sendMail({

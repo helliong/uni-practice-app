@@ -1,45 +1,30 @@
 # Docker
 
-Проект можно запустить через Docker Compose: приложение Next.js и PostgreSQL поднимаются вместе.
+Проект запускается через Docker Compose без обязательного `.env`. Вместе поднимаются Next.js, PostgreSQL, локальная почта Mailpit и S3-совместимое хранилище MinIO.
 
 ## Локальный запуск через Docker
 
-1. Скопировать пример переменных окружения:
-
-   ```bash
-   cp docker.env.example .env
-   ```
-
-2. Проверить значения в `.env`.
-
-   Для локального запуска можно оставить `NEXTAUTH_URL=http://localhost:3001`.
-   Перед деплоем на сервер обязательно заменить `POSTGRES_PASSWORD`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL` и SMTP-настройки.
-
-   Отправка шестизначного кода при регистрации требует рабочего SMTP-аккаунта:
-
-   ```env
-   SMTP_HOST=smtp.example.com
-   SMTP_PORT=587
-   SMTP_USER=mailer@example.com
-   SMTP_PASSWORD=application_password
-   SMTP_FROM=Campus & Code <mailer@example.com>
-   ```
-
-   В `SMTP_PASSWORD` нужно указывать пароль приложения почтового сервиса. Для SSL обычно используется порт `465`, для STARTTLS — `587`.
-
-3. Собрать и запустить контейнеры:
+1. Собрать и запустить контейнеры из корня репозитория:
 
    ```bash
    docker compose up -d --build
    ```
 
-4. Открыть приложение:
+2. Открыть приложение:
 
    ```text
    http://localhost:3001
    ```
 
-Миграции Prisma применяются автоматически при старте контейнера `app` через `prisma migrate deploy`.
+Дополнительная настройка не требуется. Миграции Prisma и идемпотентный seed выполняются контейнером `db-init`; повторный запуск не удаляет созданные пользователем данные.
+
+Тестовые письма с кодами регистрации доступны в Mailpit:
+
+```text
+http://localhost:8025
+```
+
+Консоль MinIO доступна на `http://localhost:9001`, логин и пароль по умолчанию — `minioadmin`. Оплата работает в демонстрационном режиме: переход на тестовую страницу результата подтверждает платёж без обращения к ЮKassa.
 
 ## Полезные команды
 
@@ -53,6 +38,12 @@ docker compose logs -f app
 
 ```bash
 docker compose logs -f postgres
+```
+
+Проверить состояние всех сервисов:
+
+```bash
+docker compose ps
 ```
 
 Остановить контейнеры:
@@ -69,9 +60,9 @@ docker compose down -v
 
 ## Данные
 
-Данные PostgreSQL сохраняются в volume `postgres_data`.
+Данные PostgreSQL сохраняются в volume `postgres_data`, файлы MinIO — в `minio_data`.
 
-Загруженные изображения сохраняются в volume `uploads_data` и доступны приложению в `/app/public/uploads`.
+Документы подтверждения сохраняются в volume `uploads_data` и доступны приложению в `/app/public/uploads`. Изображения товаров сохраняются в MinIO.
 
 ## Деплой на сервер
 
@@ -83,6 +74,11 @@ POSTGRES_PASSWORD=strong_password
 POSTGRES_DB=uni_practice_app
 NEXTAUTH_URL=https://your-domain.example
 NEXTAUTH_SECRET=strong_random_secret
+APP_URL=https://your-domain.example
+PAYMENT_MODE=yookassa
+YOOKASSA_API_URL=https://api.yookassa.ru/v3
+YOOKASSA_SHOP_ID=shop-id
+YOOKASSA_SECRET_KEY=secret-key
 SMTP_HOST=smtp.example.com
 SMTP_PORT=587
 SMTP_USER=mailer@example.com
@@ -97,6 +93,8 @@ S3_PUBLIC_URL=https://cdn.example.com
 S3_FORCE_PATH_STYLE=false
 APP_PORT=3000
 ```
+
+`.env` нужен только для переопределения демонстрационных значений и подключения реальных внешних сервисов. Для обычной проверки проекта создавать его не нужно.
 
 После этого:
 

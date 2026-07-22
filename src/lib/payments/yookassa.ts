@@ -1,4 +1,18 @@
+import { randomUUID } from "node:crypto";
+import { PaymentStatus } from "@prisma/client";
+import { prisma } from "@/lib/database/prisma";
+
 const DEFAULT_API_URL = "https://api.yookassa.ru/v3";
+
+function isMockPaymentMode() {
+  return process.env.PAYMENT_MODE === "mock";
+}
+
+function getAppUrl() {
+  const appUrl = process.env.APP_URL?.trim() || process.env.NEXTAUTH_URL?.trim();
+  if (!appUrl) throw new Error("APP_URL is required");
+  return appUrl.replace(/\/$/, "");
+}
 
 type YooKassaAmount = {
   value: string;
@@ -40,6 +54,27 @@ function getConfig() {
   };
 }
 
+async function getMockPayment(paymentId: string): Promise<YooKassaPayment> {
+  const payment = await prisma.payment.findUnique({
+    where: { providerPaymentId: paymentId },
+    include: { order: { select: { number: true } } },
+  });
+  if (!payment) throw new Error("Mock payment not found");
+
+  const status = payment.status === PaymentStatus.CANCELED ? "canceled" : "succeeded";
+  return {
+    id: paymentId,
+    status,
+    paid: status === "succeeded",
+    test: true,
+    amount: { value: formatYooKassaAmount(payment.amount), currency: payment.currency },
+    metadata: { order_id: payment.orderId, order_number: payment.order.number },
+    ...(status === "canceled"
+      ? { cancellation_details: { party: "merchant", reason: "canceled" } }
+      : {}),
+  };
+}
+
 async function requestYooKassa<T>(path: string, init: RequestInit) {
   const config = getConfig();
   const response = await fetch(`${config.apiUrl}${path}`, {
@@ -75,6 +110,21 @@ export async function createYooKassaPayment({
   orderNumber: string;
   idempotenceKey: string;
 }) {
+  if (isMockPaymentMode()) {
+    return {
+      id: `mock-${randomUUID()}`,
+      status: "pending",
+      paid: false,
+      test: true,
+      amount: { value: formatYooKassaAmount(amount), currency: "RUB" },
+      confirmation: {
+        type: "redirect",
+        confirmation_url: `${getAppUrl()}/checkout/result?orderId=${encodeURIComponent(orderId)}`,
+      },
+      metadata: { order_id: orderId, order_number: orderNumber },
+    } satisfies YooKassaPayment;
+  }
+
   const config = getConfig();
 
   return requestYooKassa<YooKassaPayment>("/payments", {
@@ -95,6 +145,8 @@ export async function createYooKassaPayment({
 }
 
 export function getYooKassaPayment(paymentId: string) {
+  if (isMockPaymentMode()) return getMockPayment(paymentId);
+
   return requestYooKassa<YooKassaPayment>(`/payments/${encodeURIComponent(paymentId)}`, {
     method: "GET",
   });
@@ -111,6 +163,15 @@ export function createYooKassaRefund({
   orderNumber: string;
   idempotenceKey: string;
 }) {
+  if (isMockPaymentMode()) {
+    return Promise.resolve({
+      id: `mock-refund-${randomUUID()}`,
+      status: "succeeded",
+      amount: { value: formatYooKassaAmount(amount), currency: "RUB" },
+      payment_id: paymentId,
+    } satisfies YooKassaRefund);
+  }
+
   return requestYooKassa<YooKassaRefund>("/refunds", {
     method: "POST",
     headers: { "Idempotence-Key": idempotenceKey },

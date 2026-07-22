@@ -258,23 +258,26 @@ const mockProductsData = [
 
 async function main() {
   console.log("Starting DB seed...");
-  
-  // Clear existing
-  await prisma.cartItem.deleteMany();
-  await prisma.favorite.deleteMany();
-  await prisma.product.deleteMany();
-  await prisma.university.deleteMany();
 
-  // Create Universities
   for (const uni of universitiesData) {
-    await prisma.university.create({ data: uni });
+    await prisma.university.upsert({
+      where: { id: uni.id },
+      update: {},
+      create: uni,
+    });
   }
   console.log("Universities seeded.");
 
-  // Create Products
   const allProducts = [...universityProductsData, ...mockProductsData];
   for (const prod of allProducts) {
-    await prisma.product.create({ data: prod });
+    await prisma.product.upsert({
+      where: { slug: prod.slug },
+      update: {},
+      create: {
+        ...prod,
+        stockCount: prod.inStock ? 25 : 0,
+      },
+    });
   }
   console.log("Products seeded.");
 
