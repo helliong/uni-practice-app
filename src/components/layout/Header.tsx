@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import AuthModal from "@/components/auth/AuthModal";
@@ -15,11 +15,20 @@ export default function Header() {
   const { items } = useCart();
   const { favorites } = useFavorites();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
   
   const [isProfilePopupOpen, setIsProfilePopupOpen] = useState(false);
-  const productSource = pathname?.startsWith('/product') ? searchParams.get('from') : null;
+  const [productSource, setProductSource] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!pathname?.startsWith('/product')) {
+      setProductSource(null);
+      return;
+    }
+
+    setProductSource(new URLSearchParams(window.location.search).get('from'));
+  }, [pathname]);
+
   const isHomeActive = pathname === "/";
   const isCatalogActive = pathname?.startsWith('/catalog') || (pathname?.startsWith('/product') && !productSource);
   const isUniversitiesActive = pathname?.startsWith('/universities') || productSource === 'universities';
