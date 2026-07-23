@@ -33,7 +33,14 @@ const colorHexMap: Record<string, string> = {
   green: "#2A9D8F",
 };
 
-export default function ProductCard({ product }: { product: Product }) {
+type ProductCardSource = "catalog" | "universities" | "it-merch";
+
+type ProductCardProps = {
+  product: Product;
+  source?: ProductCardSource;
+};
+
+export default function ProductCard({ product, source = "catalog" }: ProductCardProps) {
   const { items, addToCart, updateQuantity } = useCart();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   
@@ -87,7 +94,8 @@ export default function ProductCard({ product }: { product: Product }) {
   };
 
   const identifier = product.sku || product.id;
-  const productUrl = `/product/${identifier}-${generateSlug(product.name)}`;
+  const baseProductUrl = `/product/${identifier}-${generateSlug(product.name)}`;
+  const productUrl = source === "catalog" ? baseProductUrl : `${baseProductUrl}?from=${source}`;
 
   return (
     <div className="product-card">

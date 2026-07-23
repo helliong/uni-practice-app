@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import AuthModal from "@/components/auth/AuthModal";
@@ -15,12 +15,15 @@ export default function Header() {
   const { items } = useCart();
   const { favorites } = useFavorites();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
   
   const [isProfilePopupOpen, setIsProfilePopupOpen] = useState(false);
+  const productSource = pathname?.startsWith('/product') ? searchParams.get('from') : null;
   const isHomeActive = pathname === "/";
-  const isCatalogActive = pathname?.startsWith('/catalog') || pathname?.startsWith('/product');
-  const isUniversitiesActive = pathname?.startsWith('/universities');
+  const isCatalogActive = pathname?.startsWith('/catalog') || (pathname?.startsWith('/product') && !productSource);
+  const isUniversitiesActive = pathname?.startsWith('/universities') || productSource === 'universities';
+  const isItMerchActive = pathname?.startsWith('/it-merch') || productSource === 'it-merch';
   const isFavoritesActive = pathname?.startsWith('/favorites');
   const isCartActive = pathname?.startsWith('/cart') || pathname?.startsWith('/checkout');
   const isProfileActive = isProfilePopupOpen || pathname?.startsWith('/login') || pathname?.startsWith('/register');
@@ -53,7 +56,7 @@ export default function Header() {
           <Link href="/universities" className={`nav-link desktop-link ${isUniversitiesActive ? 'active' : ''}`}>
             Университеты
           </Link>
-          <Link href="/it-merch" className={`nav-link desktop-link ${pathname?.startsWith('/it-merch') ? 'active' : ''}`}>
+          <Link href="/it-merch" className={`nav-link desktop-link ${isItMerchActive ? 'active' : ''}`}>
             IT-мерч
           </Link>
           <Link href="/" className="nav-link desktop-link">

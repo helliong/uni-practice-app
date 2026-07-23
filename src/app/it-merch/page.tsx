@@ -312,7 +312,7 @@ export default function ITMerchPage() {
               <p style={{ padding: '2rem' }}>Загрузка товаров...</p>
             ) : filteredProducts.length > 0 ? (
               filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product.id} product={product} source="it-merch" />
               ))
             ) : (
               <p style={{ padding: '2rem' }}>Товары не найдены.</p>

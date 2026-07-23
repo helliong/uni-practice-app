@@ -377,7 +377,7 @@ export default function UniversitiesPage() {
 
           <div className="universities-grid">
             {filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} source="universities" />
             ))}
           </div>
 

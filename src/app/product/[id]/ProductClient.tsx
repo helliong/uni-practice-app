@@ -39,9 +39,10 @@ type ProductClientProps = {
     color?: string;
     size?: string;
   };
+  source?: "catalog" | "universities" | "it-merch";
 };
 
-export default function ProductClient({ product, initialVariant }: ProductClientProps) {
+export default function ProductClient({ product, initialVariant, source = "catalog" }: ProductClientProps) {
   const { items, addToCart, updateQuantity } = useCart();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
 
@@ -154,6 +155,16 @@ export default function ProductClient({ product, initialVariant }: ProductClient
     other: "Разное",
   };
   const categoryName = categoryNames[product.category] || "Товары";
+  const rootBreadcrumb =
+    source === "universities"
+      ? { href: "/universities", label: "Университеты" }
+      : source === "it-merch"
+        ? { href: "/it-merch", label: "IT-мерч" }
+        : { href: "/catalog", label: "Каталог" };
+  const categoryHref =
+    source === "catalog"
+      ? `/catalog?category=${product.category}`
+      : rootBreadcrumb.href;
 
   const formattedPrice = product.price.toLocaleString("ru-RU");
 
@@ -164,9 +175,9 @@ export default function ProductClient({ product, initialVariant }: ProductClient
           <div className="breadcrumbs">
             <Link href="/">Главная</Link>
             <FiChevronRight className="separator" />
-            <Link href="/catalog">Каталог</Link>
+            <Link href={rootBreadcrumb.href}>{rootBreadcrumb.label}</Link>
             <FiChevronRight className="separator" />
-            <Link href={`/catalog?category=${product.category}`}>
+            <Link href={categoryHref}>
               {categoryName}
             </Link>
             <FiChevronRight className="separator" />
